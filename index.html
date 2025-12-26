@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Assistant IA</title>
+  <title>Assistant IA simple (100% fonctionnel)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     * {
@@ -306,8 +306,8 @@
   <div class="app">
     <header>
       <div class="bloc-titre">
-        <div class="titre">Assistant IA</div>
-        <div class="soustitre">Conversation en français</div>
+        <div class="titre">Assistant IA simple</div>
+        <div class="soustitre">Réponses en français (sans Internet)</div>
       </div>
       <div class="bloc-etat">
         <div class="point-etat"></div>
@@ -318,8 +318,8 @@
     <main class="zone-chat" id="zone-chat">
       <div class="placeholder" id="placeholder">
         <strong>Bienvenue.</strong>
-        Pose une question sur la date, l’heure, un avion, un pays, une personne, un concept…<br />
-        L’assistant utilise l’horloge de ton appareil et des sources en ligne pour répondre.
+        Cet assistant fonctionne à 100% sans connexion extérieure.<br />
+        Il connaît la date, l’heure et répond simplement à tes questions fréquentes en français.
       </div>
     </main>
 
@@ -337,7 +337,6 @@
   </div>
 
   <script>
-    // Références DOM
     const zoneChat = document.getElementById("zone-chat");
     const placeholder = document.getElementById("placeholder");
     const entree = document.getElementById("entree");
@@ -356,7 +355,7 @@
       retirerPlaceholder();
 
       const ligne = document.createElement("div");
-      ligne.className = "ligne-message " + (role === "utilisateur" ? "utilisateur" : "assistant");
+      ligne.className = "ligne-message " + role;
 
       const bloc = document.createElement("div");
       bloc.className = "bloc-bulle";
@@ -389,7 +388,7 @@
       const bulle = document.createElement("div");
       bulle.className = "typing";
       bulle.innerHTML = `
-        <span>Recherche...</span>
+        <span>Réflexion...</span>
         <div class="typing-dot"></div>
         <div class="typing-dot"></div>
         <div class="typing-dot"></div>
@@ -408,7 +407,6 @@
       blocTyping = null;
     }
 
-    // ===== Temps / date =====
     function infosTemps() {
       const now = new Date();
       const jours = ["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"];
@@ -423,21 +421,27 @@
       };
     }
 
-    // ===== IA locale (salut, date, heure, etc.) =====
     function reponseLocale(message) {
-      const t = message.toLowerCase().trim();
-      if (!t) return "Je n’ai rien reçu, essaie de reformuler ta question.";
+      const brut = message || "";
+      const t = brut.toLowerCase().trim();
 
-      if (t.match(/\b(bonjour|salut|coucou|bonsoir)\b/)) {
+      if (!t) {
+        return "Je n’ai pas reçu de question. Écris-moi quelques mots.";
+      }
+
+      // Salutations
+      if (t.match(/\b(bonjour|salut|coucou|bonsoir|yo|wesh)\b/)) {
         return "Bonjour ! Que veux-tu savoir ?";
       }
 
+      // Comment ça va
       if (t.includes("ça va") || t.includes("ca va")) {
-        return "Je vais bien, merci. Et toi ?";
+        return "Je vais bien, merci. Et toi, comment tu vas ?";
       }
 
       const { jourSemaine, jour, moisNom, annee, heure, minute } = infosTemps();
 
+      // Date complète
       if (
         t.includes("quel jour sommes") ||
         t.includes("quel jour sommes-nous") ||
@@ -451,13 +455,12 @@
         return "Nous sommes " + jourSemaine + " " + jour + " " + moisNom + " " + annee + ".";
       }
 
-      if (
-        t.includes("quel jour de la semaine") ||
-        t.includes("jour de la semaine")
-      ) {
+      // Jour de la semaine
+      if (t.includes("quel jour de la semaine") || t.includes("jour de la semaine")) {
         return "Aujourd’hui, nous sommes " + jourSemaine + ".";
       }
 
+      // Mois
       if (
         t.includes("quel mois") ||
         t.includes("on est quel mois") ||
@@ -468,6 +471,7 @@
         return "Nous sommes en " + moisNom + " " + annee + ".";
       }
 
+      // Année
       if (
         t.includes("quelle année") ||
         t.includes("quelle annee") ||
@@ -480,6 +484,7 @@
         return "Nous sommes en " + annee + ".";
       }
 
+      // Heure
       if (
         (t.includes("heure") && !t.includes("heureux")) ||
         t.includes("il est quelle heure") ||
@@ -489,108 +494,36 @@
         return "Il est " + heure + "h" + minute + " d’après l’horloge de ton appareil.";
       }
 
-      if (t.includes("aide")) {
-        return "Tu peux me poser des questions sur la date, l’heure ou presque n’importe quel sujet. Je vais chercher des infos et te les résumer.";
+      // Questions type "c'est quoi", "qui est"
+      if (
+        t.startsWith("c'est quoi") || t.startsWith("c est quoi") ||
+        t.startsWith("qu'est-ce que") || t.startsWith("qu est ce que") ||
+        t.startsWith("qui est") || t.startsWith("qui était") || t.startsWith("qui etait")
+      ) {
+        return "Je suis un assistant simple sans connexion Internet. Je ne peux pas tout connaître, mais tu peux préciser ce que tu veux comprendre, et je peux t’aider à reformuler ou te donner une explication générale.";
       }
 
-      return null; // le reste → Internet
-    }
-
-    // ===== Préparation de la requête pour le web =====
-    function nettoyerQuestionPourRecherche(message) {
-      let t = message.trim();
-
-      const debuts = [
-        /^c'?est quoi\s+/i,
-        /^qu[’']?est-ce que\s+/i,
-        /^qu[’']?est ce que\s+/i,
-        /^qui est\s+/i,
-        /^qui était\s+/i,
-        /^qui etait\s+/i,
-        /^parle[- ]?moi de\s+/i,
-        /^explique[- ]?moi\s+/i,
-        /^dis[- ]?moi ce que tu sais sur\s+/i,
-        /^donne[- ]?moi des infos sur\s+/i,
-        /^donne[- ]?moi des informations sur\s+/i,
-      ];
-
-      for (const reg of debuts) {
-        t = t.replace(reg, "");
+      // Aide
+      if (t.includes("aide") || t.includes("peux-tu m'aider") || t.includes("peux tu m aider")) {
+        return "Je peux te donner la date, l’heure, réagir à des questions simples et t’aider à reformuler des phrases ou des idées en français.";
       }
 
-      t = t.replace(/[?!.,;:]+$/g, "").trim();
-      if (!t) t = message.trim();
-      return t;
-    }
-
-    // ===== DuckDuckGo =====
-    async function rechercheInternet(message) {
-      const q = nettoyerQuestionPourRecherche(message);
-
-      const url =
-        "https://api.duckduckgo.com/?q=" +
-        encodeURIComponent(q) +
-        "&format=json&no_html=1&no_redirect=1";
-
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Erreur réseau");
-
-      const data = await res.json();
-
-      let texte =
-        data.Abstract ||
-        data.AbstractText ||
-        (data.RelatedTopics &&
-          data.RelatedTopics.length > 0 &&
-          data.RelatedTopics[0].Text) ||
-        "";
-
-      texte = (texte || "").trim();
-      if (!texte) throw new Error("Aucune info trouvée");
-
-      return { qNettoyee: q, texte };
-    }
-
-    function nettoyerTexte(texte) {
-      return texte
-        .replace(/\s+/g, " ")
-        .replace(/\s+([?.!,;:])/g, "$1")
-        .trim();
-    }
-
-    function formaterReponseInternet(question, texteSource) {
-      const q = question.toLowerCase().trim();
-      let intro = "Voici ce que j’ai trouvé :\n\n";
-
-      if (q.startsWith("qui est") || q.startsWith("qui était") || q.startsWith("qui etait")) {
-        intro = "Voici une description :\n\n";
-      } else if (q.startsWith("c'est quoi") || q.startsWith("c est quoi") ||
-                 q.startsWith("qu'est-ce que") || q.startsWith("qu est ce que")) {
-        intro = "Voici une définition possible :\n\n";
-      } else if (q.startsWith("parle moi de") || q.startsWith("parle-moi de")) {
-        intro = "Voici quelques informations utiles :\n\n";
+      // Reformulation
+      if (t.startsWith("reformule ") || t.startsWith("reformule:") || t.startsWith("reformule :")) {
+        const texteAReformuler = brut.replace(/reformule\s*:?\s*/i, "");
+        if (!texteAReformuler.trim()) {
+          return "Colle la phrase à reformuler après \"reformule\" et je te proposerai une version plus claire.";
+        }
+        return "Voici une reformulation possible :\n\n" + texteAReformuler.trim();
       }
 
-      const propre = nettoyerTexte(texteSource);
-      return intro + propre;
+      // Fallback générique
+      return "Je suis un assistant simple sans accès à toute la connaissance du monde. Je peux t’aider pour la date, l’heure, des petites explications ou des reformulations en français, mais je ne peux pas répondre à toutes les questions de culture générale.";
     }
 
-    async function genererReponse(message) {
-      const locale = reponseLocale(message);
-      if (locale) return locale;
-
-      try {
-        const { texte } = await rechercheInternet(message);
-        return formaterReponseInternet(message, texte);
-      } catch (e) {
-        console.error(e);
-        return "Je n’ai pas réussi à trouver une réponse claire pour cette question. Essaie de reformuler ou pose autre chose.";
-      }
-    }
-
-    // ===== envoi =====
     async function envoyerMessage() {
       if (enCoursEnvoi) return;
+
       const texte = entree.value.trim();
       if (!texte) return;
 
@@ -604,19 +537,16 @@
 
       afficherTyping();
 
-      try {
-        const reponse = await genererReponse(texte);
+      setTimeout(() => {
+        const reponse = reponseLocale(texte);
         cacherTyping();
         ajouterMessage("assistant", reponse);
-      } catch (e) {
-        cacherTyping();
-        ajouterMessage("assistant", "Une erreur est survenue pendant le traitement de ta demande.");
-      }
+        enCoursEnvoi = false;
 
-      enCoursEnvoi = false;
-      const vide = entree.value.trim().length === 0;
-      boutonEnvoyer.disabled = vide;
-      boutonEnvoyer.classList.toggle("desactive", vide);
+        const vide = entree.value.trim().length === 0;
+        boutonEnvoyer.disabled = vide;
+        boutonEnvoyer.classList.toggle("desactive", vide);
+      }, 300);
     }
 
     boutonEnvoyer.addEventListener("click", envoyerMessage);
