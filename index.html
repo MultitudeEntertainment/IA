@@ -307,19 +307,19 @@
     <header>
       <div class="bloc-titre">
         <div class="titre">Assistant IA</div>
-        <div class="soustitre">Réponses en français avec Internet</div>
+        <div class="soustitre">Réponses en français</div>
       </div>
       <div class="bloc-etat">
         <div class="point-etat"></div>
-        <div style="font-size:11px;color:#4b5563;">En ligne (Wikipédia)</div>
+        <div style="font-size:11px;color:#4b5563;">Actif</div>
       </div>
     </header>
 
     <main class="zone-chat" id="zone-chat">
       <div class="placeholder" id="placeholder">
         <strong>Bienvenue.</strong>
-        Pose une question sur n’importe quel sujet : date, heure, avion, pays, personne, concept, etc.<br />
-        L’assistant utilise l’horloge de ton appareil et Wikipédia (FR/EN) pour répondre.
+        Pose une question sur la date, l’heure, un avion, un pays, une personne, un concept…<br />
+        L’assistant utilise l’horloge de ton appareil et des sources en ligne pour répondre.
       </div>
     </main>
 
@@ -407,7 +407,7 @@
     }
 
     // =========================
-    // RÉPONSES LOCALES (date, heure, salut, aide)
+    // RÉPONSES LOCALES (date / heure / salut)
     // =========================
     function reponseLocale(message) {
       const t = message.toLowerCase().trim();
@@ -437,13 +437,16 @@
       const h = String(maintenant.getHours()).padStart(2, "0");
       const m = String(maintenant.getMinutes()).padStart(2, "0");
 
+      // variantes pour la date complète
       if (
         t.includes("quel jour sommes") ||
         t.includes("quel jour sommes-nous") ||
         t.includes("quel jour est-il") ||
         t.includes("on est quel jour") ||
         t.includes("c'est quel jour") ||
-        t.includes("c est quel jour")
+        t.includes("c est quel jour") ||
+        t.includes("quel jour on est") ||
+        t.includes("nous sommes quel jour")
       ) {
         return "Nous sommes le " + jourSemaine + " " + jour + " " + moisNom + " " + annee + ".";
       }
@@ -456,7 +459,8 @@
         t.includes("quel mois") ||
         t.includes("on est quel mois") ||
         t.includes("c'est quel mois") ||
-        t.includes("c est quel mois")
+        t.includes("c est quel mois") ||
+        t.includes("nous sommes quel mois")
       ) {
         return "Nous sommes au mois de " + moisNom + " " + annee + ".";
       }
@@ -465,29 +469,34 @@
         t.includes("quelle année") ||
         t.includes("on est en quelle année") ||
         t.includes("en quelle année sommes-nous") ||
-        t.includes("en quelle annee sommes nous")
+        t.includes("en quelle annee sommes nous") ||
+        t.includes("nous sommes en quelle année")
       ) {
         return "Nous sommes en " + annee + ".";
       }
 
+      // pour l'heure : on attrape large dès qu'il y a "heure"
       if (
         t.includes("quelle heure") ||
         t.includes("il est quelle heure") ||
         t.includes("c'est quelle heure") ||
-        t.includes("c est quelle heure")
+        t.includes("c est quelle heure") ||
+        t.includes("donne l'heure") ||
+        t.includes("donne l heure") ||
+        (t.includes("heure") && !t.includes("heureux")) // si le mot "heure" apparaît
       ) {
         return "Il est environ " + h + "h" + m + " selon l’horloge de ton appareil.";
       }
 
-      if (t.includes("aide") || t.includes("peux-tu m'aider") || t.includes("peux tu m aider")) {
-        return "Je peux te donner la date, l’heure, et des informations sur beaucoup de sujets grâce à Wikipédia. Pose ta question directement.";
+      if (t.includes("aide")) {
+        return "Je peux te donner la date, l’heure, et des informations générales sur beaucoup de sujets. Pose ta question directement.";
       }
 
-      return null; // le reste part vers le web
+      return null; // le reste ira sur Internet
     }
 
     // =========================
-    // EXTRACTION DU SUJET POUR WIKIPÉDIA
+    // EXTRACTION SUJET POUR RECHERCHE
     // =========================
     function extraireSujetPourWiki(message) {
       let t = message.toLowerCase().trim();
@@ -533,26 +542,50 @@
       };
     }
 
+    async function requeteDuckDuckGo(message) {
+      const url = "https://api.duckduckgo.com/?q=" +
+        encodeURIComponent(message) +
+        "&format=json&no_html=1&no_redirect=1";
+
+      const res = await fetch(url);
+      if (!res.ok) {
+        throw new Error("Erreur HTTP DuckDuckGo");
+      }
+      const data = await res.json();
+
+      let texte =
+        data.Abstract ||
+        data.AbstractText ||
+        (data.RelatedTopics && data.RelatedTopics[0] && data.RelatedTopics[0].Text) ||
+        "";
+
+      texte = (texte || "").trim();
+      if (!texte) {
+        throw new Error("Pas de résumé pertinent trouvé.");
+      }
+
+      return texte;
+    }
+
     async function reponseWeb(message) {
-      const sujet = extraireSujetPourWiki(message);
+      const sujet = extraireSujetPourWiki(message) || message.trim();
       if (!sujet) {
         throw new Error("Sujet introuvable dans la question.");
       }
 
+      // 1) Essai Wikipédia FR
       try {
         const fr = await requeteWikipedia(sujet, "fr");
-        return "Voici un résumé de « " + fr.titre + " » d’après Wikipédia (FR) :\n\n" + fr.resume;
+        return "Voici un résumé :\n\n" + fr.resume;
       } catch (e) {
+        // 2) Essai Wikipédia EN
         try {
           const en = await requeteWikipedia(sujet, "en");
-          return (
-            "Je n’ai pas trouvé de page claire en français, mais voici un résumé de « " +
-            en.titre +
-            " » d’après Wikipédia (EN) :\n\n" +
-            en.resume
-          );
+          return "Voici un résumé :\n\n" + en.resume;
         } catch (e2) {
-          throw new Error("Impossible de récupérer des infos sur ce sujet.");
+          // 3) Essai DuckDuckGo
+          const ddg = await requeteDuckDuckGo(sujet);
+          return "Voici un résumé :\n\n" + ddg;
         }
       }
     }
@@ -589,8 +622,7 @@
         cacherTyping();
         ajouterMessage(
           "assistant",
-          "Je n’ai pas réussi à trouver une réponse claire pour cette question. " +
-          "Essaie de reformuler, ou pose une autre question plus précise."
+          "Je n’ai pas réussi à trouver une réponse claire pour cette question. Essaie de reformuler ou pose une autre question."
         );
       } finally {
         enCoursEnvoi = false;
