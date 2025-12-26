@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chat IA local - Nicolas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    /* --------- Reset --------- */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #1f2937 0, #020617 45%, #000 100%);
+      color: #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+    }
+
+    /* --------- App container --------- */
+    .app {
+      width: 100%;
+      max-width: 940px;
+      height: 95vh;
+      max-height: 760px;
+      background: rgba(15, 23, 42, 0.96);
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow:
+        0 0 40px rgba(0, 0, 0, 0.8),
+        0 0 0 1px rgba(148, 163, 184, 0.35);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      backdrop-filter: blur(14px);
+    }
+
+    /* --------- Header --------- */
+    .app-header {
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(
+        90deg,
+        rgba(59, 130, 246, 0.35),
+        rgba(168, 85, 247, 0.28),
+        rgba(236, 72, 153, 0.25)
+      );
+      border-bottom: 1px solid rgba(15, 23, 42, 0.9);
+    }
+
+    .app-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.9);
+    }
+
+    .app-title {
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .app-subtitle {
+      font-size: 12px;
+      opacity: 0.85;
+    }
+
+    .app-header-right {
+      text-align: right;
+      font-size: 11px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(15, 23, 42, 0.9);
+      background: rgba(15, 23, 42, 0.65);
+      margin-bottom: 2px;
+      font-size: 11px;
+    }
+
+    .chip-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #38bdf8;
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.9);
+    }
+
+    /* --------- Chat container --------- */
+    .chat {
+      flex: 1;
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+      position: relative;
+    }
+
+    .chat-placeholder {
+      margin: auto;
+      text-align: center;
+      opacity: 0.7;
+      font-size: 13px;
+      max-width: 480px;
+      line-height: 1.5;
+    }
+
+    .chat-placeholder strong {
+      font-weight: 600;
+      color: #bfdbfe;
+    }
+
+    .message-row {
+      display: flex;
+      margin-bottom: 4px;
+    }
+
+    .message-row.user {
+      justify-content: flex-end;
+    }
+
+    .message-row.ai {
+      justify-content: flex-start;
+    }
+
+    .message-wrapper {
+      max-width: 72%;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .message-bubble {
+      padding: 9px 11px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.45;
+      position: relative;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+      animation: fadeInUp 0.18s ease-out;
+    }
+
+    .message-row.user .message-bubble {
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: #f9fafb;
+      border-bottom-right-radius: 4px;
+      box-shadow: 0 0 18px rgba(79, 70, 229, 0.8);
+    }
+
+    .message-row.ai .message-bubble {
+      background: rgba(15, 23, 42, 0.98);
+      border: 1px solid rgba(148, 163, 184, 0.65);
+      border-bottom-left-radius: 4px;
+    }
+
+    .message-meta {
+      font-size: 11px;
+      opacity: 0.6;
+    }
+
+    .message-meta span {
+      opacity: 0.85;
+    }
+
+    .typing-indicator {
+      display: inline-flex;
+      gap: 4px;
+      padding: 6px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      margin-top: 4px;
+    }
+
+    .typing-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      opacity: 0.25;
+      animation: typingBlink 1.4s infinite ease-in-out;
+    }
+
+    .typing-dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing-dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    /* --------- Input bar --------- */
+    .input-bar {
+      border-top: 1px solid rgba(15, 23, 42, 1);
+      background: radial-gradient(circle at top, rgba(30, 64, 175, 0.25), rgba(15, 23, 42, 0.98));
+      padding: 10px 14px;
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+    }
+
+    .input-wrapper {
+      flex: 1;
+      position: relative;
+    }
+
+    .input {
+      width: 100%;
+      min-height: 40px;
+      max-height: 120px;
+      padding: 8px 10px 24px 10px;
+      resize: none;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.8);
+      background: rgba(15, 23, 42, 0.96);
+      color: #f9fafb;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    .input::placeholder {
+      color: rgba(148, 163, 184, 0.9);
+    }
+
+    .input:focus {
+      border-color: #60a5fa;
+      box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.7);
+      background: rgba(15, 23, 42, 1);
+    }
+
+    .input-hint {
+      position: absolute;
+      right: 8px;
+      bottom: 4px;
+      font-size: 11px;
+      opacity: 0.65;
+    }
+
+    .send-btn {
+      width: 44px;
+      height: 40px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: #f9fafb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 0 18px rgba(79, 70, 229, 0.85);
+      transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.1s ease;
+    }
+
+    .send-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 26px rgba(79, 70, 229, 1);
+    }
+
+    .send-btn:active {
+      transform: translateY(1px) scale(0.97);
+      box-shadow: 0 0 10px rgba(79, 70, 229, 0.7);
+    }
+
+    .send-btn.disabled {
+      opacity: 0.5;
+      cursor: default;
+      box-shadow: none;
+      transform: none;
+    }
+
+    /* --------- Loader bandeau --------- */
+    .model-loader {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(96, 165, 250, 0.8);
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 0 18px rgba(59, 130, 246, 0.8);
+      z-index: 10;
+    }
+
+    .loader-spinner {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      border: 2px solid rgba(96, 165, 250, 0.2);
+      border-top-color: #60a5fa;
+      animation: spin 0.8s linear infinite;
+    }
+
+    /* --------- Animations --------- */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes typingBlink {
+      0%, 60%, 100% { opacity: 0.2; transform: translateY(0); }
+      30% { opacity: 1; transform: translateY(-1px); }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* --------- Responsive --------- */
+    @media (max-width: 640px) {
+      body {
+        padding: 0;
+      }
+
+      .app {
+        height: 100vh;
+        max-height: none;
+        border-radius: 0;
+      }
+
+      .message-wrapper {
+        max-width: 86%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="app-header-left">
+        <div class="status-dot"></div>
+        <div>
+          <div class="app-title">Assistant IA local de Nicolas</div>
+          <div class="app-subtitle">Modèle open source dans ton navigateur, sans clé.</div>
+        </div>
+      </div>
+      <div class="app-header-right">
+        <div class="chip">
+          <div class="chip-dot"></div>
+          <span>Mode IA locale navigateur</span>
+        </div>
+        <div>Modèle : <strong>GPT‑2 (Xenova)</strong></div>
+        <div style="opacity:0.85;">Aucun serveur, aucune clé API</div>
+      </div>
+    </header>
+
+    <!-- Chat -->
+    <main class="chat" id="chat">
+      <div class="chat-placeholder" id="placeholder">
+        <strong>Bienvenue dans ton chat IA 100% local.</strong><br /><br />
+        Le modèle open source sera chargé directement dans ton navigateur.<br />
+        C’est l’équivalent de ton IA en Torch, mais en JavaScript, sans clé et sans backend.<br /><br />
+        Quand le chargement du modèle est terminé, commence à m’écrire un message en bas.
+      </div>
+    </main>
+
+    <!-- Input -->
+    <footer class="input-bar">
+      <div class="input-wrapper">
+        <textarea
+          id="user-input"
+          class="input"
+          rows="1"
+          placeholder="Pose ta question ici... (Entrée pour envoyer, Shift+Entrée pour un retour à la ligne)"
+        ></textarea>
+        <div class="input-hint">Entrée ↵ pour envoyer</div>
+      </div>
+      <button id="send-btn" class="send-btn disabled" title="Envoyer" disabled>
+        ➤
+      </button>
+    </footer>
+  </div>
+
+  <!-- Script IA + logique du chat -->
+  <script type="module">
+    // ---------------------------------------------------------
+    //  IMPORT DU PIPELINE TRANSFORMERS.JS (EQUIVALENT DE TORCH)
+    // ---------------------------------------------------------
+    import { pipeline } from "https://cdn.jsdelivr.net/npm/@xenova/transformers";
+
+    const chatEl = document.getElementById("chat");
+    const placeholderEl = document.getElementById("placeholder");
+    const inputEl = document.getElementById("user-input");
+    const sendBtn = document.getElementById("send-btn");
+
+    let generator = null;
+    let isSending = false;
+    let modelReady = false;
+    let typingEl = null;
+
+    // Bandeau de chargement du modèle
+    const modelLoader = document.createElement("div");
+    modelLoader.className = "model-loader";
+    modelLoader.innerHTML = `
+      <div class="loader-spinner"></div>
+      <div>Chargement du modèle IA local (GPT‑2)...</div>
+    `;
+    chatEl.appendChild(modelLoader);
+
+    // ---------------------------------------------------------
+    //  CHARGEMENT DU MODELE (EQUIVALENT A TORCH.LOAD EN PYTHON)
+    // ---------------------------------------------------------
+    async function loadModel() {
+      try {
+        generator = await pipeline(
+          "text-generation",
+          "Xenova/gpt2"
+        );
+        modelReady = true;
+        modelLoader.innerHTML = `
+          <div class="loader-spinner" style="border-top-color:#22c55e;"></div>
+          <div>Modèle chargé. Tu peux commencer à écrire.</div>
+        `;
+        setTimeout(() => {
+          modelLoader.remove();
+        }, 1800);
+
+        sendBtn.classList.remove("disabled");
+        sendBtn.disabled = false;
+      } catch (err) {
+        console.error("Erreur de chargement du modèle :", err);
+        modelLoader.innerHTML = `
+          <div style="width:12px;height:12px;border-radius:999px;background:#ef4444;"></div>
+          <div>Erreur lors du chargement du modèle.</div>
+        `;
+      }
+    }
+
+    loadModel();
+
+    // ---------------------------------------------------------
+    //  AFFICHAGE DES MESSAGES
+    // ---------------------------------------------------------
+    function addMessage(role, text) {
+      if (placeholderEl) {
+        placeholderEl.remove();
+      }
+
+      const row = document.createElement("div");
+      row.className = "message-row " + role;
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "message-wrapper";
+
+      const bubble = document.createElement("div");
+      bubble.className = "message-bubble";
+      bubble.textContent = text;
+
+      const meta = document.createElement("div");
+      meta.className = "message-meta";
+      meta.innerHTML = role === "user"
+        ? `<span>Toi</span>`
+        : `<span>Assistant IA local</span>`;
+
+      wrapper.appendChild(bubble);
+      wrapper.appendChild(meta);
+      row.appendChild(wrapper);
+      chatEl.appendChild(row);
+
+      chatEl.scrollTop = chatEl.scrollHeight;
+    }
+
+    function showTyping() {
+      if (typingEl) return;
+
+      typingEl = document.createElement("div");
+      typingEl.className = "message-row ai";
+      typingEl.innerHTML = `
+        <div class="message-wrapper">
+          <div class="typing-indicator">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+          </div>
+        </div>
+      `;
+      chatEl.appendChild(typingEl);
+      chatEl.scrollTop = chatEl.scrollHeight;
+    }
+
+    function hideTyping() {
+      if (typingEl) {
+        typingEl.remove();
+        typingEl = null;
+      }
+    }
+
+    // ---------------------------------------------------------
+    //  GENERATION DE TEXTE (EQUIVALENT FORWARD DU MODELE TORCH)
+    // ---------------------------------------------------------
+    async function generateResponse(prompt) {
+      if (!generator) {
+        return "Le modèle n'est pas encore prêt. Attends quelques secondes puis réessaie.";
+      }
+
+      const maxTokens = 80;
+
+      const output = await generator(prompt, {
+        max_new_tokens: maxTokens,
+        temperature: 0.8,
+        top_p: 0.9,
+        repetition_penalty: 1.1
+      });
+
+      const fullText = output[0].generated_text;
+      if (!fullText.startsWith(prompt)) {
+        return fullText;
+      }
+
+      let completion = fullText.slice(prompt.length);
+      completion = completion.trim();
+      return completion || "(La génération n'a rien produit d'intéressant...)";
+    }
+
+    // ---------------------------------------------------------
+    //  GESTION DE L'ENVOI
+    // ---------------------------------------------------------
+    async function handleSend() {
+      if (isSending || !modelReady) return;
+
+      const text = inputEl.value.trim();
+      if (!text) return;
+
+      addMessage("user", text);
+      inputEl.value = "";
+      inputEl.style.height = "auto";
+
+      isSending = true;
+      sendBtn.classList.add("disabled");
+      sendBtn.disabled = true;
+      showTyping();
+
+      try {
+        const prompt = "Utilisateur: " + text + "\nAssistant:";
+        const aiReply = await generateResponse(prompt);
+
+        hideTyping();
+        addMessage("ai", aiReply);
+      } catch (err) {
+        console.error(err);
+        hideTyping();
+        addMessage("ai", "Une erreur est survenue lors de la génération de la réponse.");
+      } finally {
+        isSending = false;
+        if (modelReady) {
+          sendBtn.classList.remove("disabled");
+          sendBtn.disabled = false;
+        }
+      }
+    }
+
+    // ---------------------------------------------------------
+    //  LISTENERS
+    // ---------------------------------------------------------
+    inputEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        handleSend();
+      }
+    });
+
+    sendBtn.addEventListener("click", () => {
+      handleSend();
+    });
+
+    inputEl.addEventListener("input", () => {
+      inputEl.style.height = "auto";
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + "px";
+    });
+  </script>
+</body>
+</html>
