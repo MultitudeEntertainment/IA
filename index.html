@@ -2,12 +2,9 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Assistant IA</title>
+  <title>Assistant IA (simple, stable)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    /* =========================================================
-       RESET ET BASE
-       ========================================================= */
     * {
       margin: 0;
       padding: 0;
@@ -28,9 +25,6 @@
       overflow: hidden;
     }
 
-    /* =========================================================
-       APPLICATION PLEIN ÉCRAN
-       ========================================================= */
     .app {
       width: 100%;
       height: 100vh;
@@ -42,9 +36,6 @@
       border-right: 1px solid #e5e7eb;
     }
 
-    /* =========================================================
-       EN-TÊTE
-       ========================================================= */
     header {
       flex-shrink: 0;
       padding: 14px 18px;
@@ -87,9 +78,6 @@
       background: #22c55e;
     }
 
-    /* =========================================================
-       ZONE DE CHAT
-       ========================================================= */
     .zone-chat {
       position: relative;
       flex: 1;
@@ -116,9 +104,6 @@
       color: #111827;
     }
 
-    /* =========================================================
-       MESSAGES
-       ========================================================= */
     .ligne-message {
       display: flex;
     }
@@ -166,43 +151,6 @@
       color: #9ca3af;
     }
 
-    /* =========================================================
-       INDICATEUR DE SAISIE
-       ========================================================= */
-    .ligne-saisie {
-      display: flex;
-      justify-content: flex-start;
-    }
-
-    .bulle-saisie {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: #e5e7eb;
-    }
-
-    .point-saisie {
-      width: 6px;
-      height: 6px;
-      border-radius: 999px;
-      background: #6b7280;
-      opacity: 0.3;
-      animation: clignote 1.3s infinite ease-in-out;
-    }
-
-    .point-saisie:nth-child(2) {
-      animation-delay: 0.2s;
-    }
-
-    .point-saisie:nth-child(3) {
-      animation-delay: 0.4s;
-    }
-
-    /* =========================================================
-       BARRE D'ENTRÉE
-       ========================================================= */
     .barre-entree {
       flex-shrink: 0;
       padding: 10px 12px;
@@ -278,93 +226,41 @@
     }
 
     .bouton-envoyer.desactive {
-      opacity: 0.5;
+      opacity: 0.4;
       cursor: default;
       box-shadow: none;
       transform: none;
     }
 
-    /* =========================================================
-       BANNIÈRE DU MODÈLE
-       ========================================================= */
-    .banniere-modele {
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #111827;
-      color: #e5e7eb;
-      font-size: 11px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
-      border: 1px solid #4b5563;
-      z-index: 10;
-    }
-
-    .banniere-spinner {
-      width: 12px;
-      height: 12px;
-      border-radius: 999px;
-      border: 2px solid rgba(156,163,175,0.4);
-      border-top-color: #e5e7eb;
-      animation: tourne 0.8s linear infinite;
-    }
-
-    /* =========================================================
-       ANIMATIONS
-       ========================================================= */
     @keyframes apparition {
       from { opacity: 0; transform: translateY(4px); }
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    @keyframes clignote {
-      0%, 60%, 100% { opacity: 0.25; transform: translateY(0); }
-      30% { opacity: 1; transform: translateY(-1px); }
-    }
-
-    @keyframes tourne {
-      to { transform: rotate(360deg); }
-    }
-
-    /* =========================================================
-       RESPONSIVE
-       ========================================================= */
     @media (max-width: 768px) {
       .app {
         max-width: 100%;
         border-left: none;
         border-right: none;
       }
-
       header {
         padding: 12px 14px;
       }
-
       .zone-chat {
         padding: 10px 12px;
       }
-
       .bulle {
         max-width: 90%;
       }
-
       .barre-entree {
         padding: 8px 10px;
       }
-
       .entree {
         font-size: 13px;
       }
-
       .astuce {
         font-size: 10px;
       }
-
       .bouton-envoyer {
         width: 42px;
         height: 38px;
@@ -378,7 +274,7 @@
     <header>
       <div class="bloc-titre">
         <div class="titre">Assistant IA</div>
-        <div class="soustitre">Conversation en français</div>
+        <div class="soustitre">Conversation en français (mode simple)</div>
       </div>
       <div class="bloc-etat">
         <div class="point-etat"></div>
@@ -389,8 +285,8 @@
     <main class="zone-chat" id="zone-chat">
       <div class="placeholder" id="placeholder">
         <strong>Bienvenue.</strong>
-        Écris un message en bas pour commencer la conversation.<br />
-        L’assistant répondra de manière simple et naturelle.
+        Écris un message en bas pour commencer.<br />
+        L’assistant répondra en français de manière simple et cohérente.
       </div>
     </main>
 
@@ -407,77 +303,14 @@
     </footer>
   </div>
 
-  <script type="module">
-    // =========================================================
-    // IMPORT DE LA LIBRAIRIE IA (modèle caché, pas affiché)
-    // =========================================================
-    import { pipeline } from "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.6.1";
-
-    // =========================================================
-    // RÉFÉRENCES DOM
-    // =========================================================
+  <script>
     const zoneChat = document.getElementById("zone-chat");
     const placeholder = document.getElementById("placeholder");
     const entree = document.getElementById("entree");
     const boutonEnvoyer = document.getElementById("bouton-envoyer");
 
-    // =========================================================
-    // ÉTAT GLOBAL
-    // =========================================================
-    let generateur = null;
-    let modelePret = false;
     let enCoursEnvoi = false;
-    let blocSaisie = null;
 
-    // =========================================================
-    // BANNIÈRE DE CHARGEMENT
-    // =========================================================
-    const banniere = document.createElement("div");
-    banniere.className = "banniere-modele";
-    banniere.innerHTML = `
-      <div class="banniere-spinner"></div>
-      <div>Préparation de l’assistant…</div>
-    `;
-    zoneChat.appendChild(banniere);
-
-    // =========================================================
-    // CHARGEMENT DU MODÈLE
-    // =========================================================
-    async function chargerModele() {
-      try {
-        // Modèle interne, utilisable dans le navigateur, nom jamais affiché.
-        generateur = await pipeline(
-          "text-generation",
-          "Xenova/gpt2"
-        );
-
-        modelePret = true;
-        banniere.innerHTML = `
-          <div class="banniere-spinner" style="border-top-color:#22c55e;"></div>
-          <div>Assistant prêt.</div>
-        `;
-        setTimeout(() => {
-          if (banniere && banniere.parentNode) {
-            banniere.remove();
-          }
-        }, 1500);
-
-        boutonEnvoyer.disabled = false;
-        boutonEnvoyer.classList.remove("desactive");
-      } catch (e) {
-        console.error("Erreur lors du chargement du modèle :", e);
-        banniere.innerHTML = `
-          <div style="width:12px;height:12px;border-radius:999px;background:#ef4444;"></div>
-          <div>Erreur lors de la préparation de l’assistant.</div>
-        `;
-      }
-    }
-
-    chargerModele();
-
-    // =========================================================
-    // FONCTIONS D'AFFICHAGE
-    // =========================================================
     function retirerPlaceholder() {
       if (placeholder && placeholder.parentNode) {
         placeholder.remove();
@@ -509,102 +342,50 @@
       zoneChat.scrollTop = zoneChat.scrollHeight;
     }
 
-    function afficherSaisie() {
-      if (blocSaisie) return;
-      blocSaisie = document.createElement("div");
-      blocSaisie.className = "ligne-saisie";
-      blocSaisie.innerHTML = `
-        <div class="bulle-saisie">
-          <div class="point-saisie"></div>
-          <div class="point-saisie"></div>
-          <div class="point-saisie"></div>
-        </div>
-      `;
-      zoneChat.appendChild(blocSaisie);
-      zoneChat.scrollTop = zoneChat.scrollHeight;
+    // "IA" simple basée sur des règles en français
+    function genererReponseSimple(message) {
+      const texte = message.toLowerCase().trim();
+
+      if (!texte) {
+        return "Je n’ai rien reçu, tu peux réessayer en écrivant quelques mots ?";
+      }
+
+      // Salutations
+      if (texte.match(/\b(bonjour|salut|coucou|bonsoir)\b/)) {
+        return "Bonjour ! Comment puis-je t’aider ?";
+      }
+
+      // Demande d'aide
+      if (texte.includes("aide") || texte.includes("aider") || texte.includes("peux-tu")) {
+        return "Je peux t’aider à reformuler un texte, expliquer une idée simplement, ou te donner des pistes sur un sujet. Dis-moi ce dont tu as besoin.";
+      }
+
+      // Reformulation
+      if (texte.includes("reformule") || texte.includes("reformuler")) {
+        return "Colle-moi la phrase ou le texte à reformuler, et je te proposerai une version plus claire en français.";
+      }
+
+      // Explication
+      if (texte.includes("explique") || texte.includes("expliquer")) {
+        return "Dis-moi ce que tu veux que j’explique, et je te donnerai une explication simple, étape par étape.";
+      }
+
+      // Texte créatif
+      if (texte.includes("histoire") || texte.includes("raconte") || texte.includes("texte créatif")) {
+        return "Je peux t’inventer un petit texte créatif en français. Par exemple :\n\n« Un matin, tout semblait normal. Pourtant, un simple message allait changer la journée : quelqu’un avait enfin créé une IA qui répondait calmement, sans phrases bizarres. »";
+      }
+
+      // Travail / école
+      if (texte.includes("devoir") || texte.includes("exercice") || texte.includes("école") || texte.includes("cours")) {
+        return "Je peux t’aider à mieux comprendre ton cours, à résumer une notion, ou à t’expliquer un exercice (sans tout faire à ta place). Dis-moi le sujet.";
+      }
+
+      // Par défaut
+      return "D’accord, je vois. Tu peux me préciser ce que tu attends de moi : une explication, une reformulation, une idée, ou un petit texte ? Je reste en français et j’essaie de rester simple.";
     }
 
-    function cacherSaisie() {
-      if (blocSaisie && blocSaisie.parentNode) {
-        blocSaisie.remove();
-      }
-      blocSaisie = null;
-    }
-
-    // =========================================================
-    // NETTOYAGE DU TEXTE GÉNÉRÉ
-    // (éviter les phrases trop bizarres / couper proprement)
-    // =========================================================
-    function nettoyerReponse(texteBrut) {
-      if (!texteBrut) return "Je n’ai pas pu générer de réponse.";
-
-      // On enlève les guillemets parasites en début/fin
-      let t = texteBrut.trim();
-      t = t.replace(/^["']+/, "").replace(/["']+$/, "").trim();
-
-      // On essaie de garder une ou deux phrases maximum
-      // en cherchant les points/points d’interrogation/exclamation.
-      const fins = [".", "?", "!"];
-      let indexFin = -1;
-      for (let i = 0; i < t.length; i++) {
-        if (fins.includes(t[i])) {
-          indexFin = i;
-          // on s’arrête à la première phrase complète raisonnable
-          if (i > 20) break;
-        }
-      }
-
-      if (indexFin !== -1) {
-        t = t.slice(0, indexFin + 1);
-      }
-
-      // On enlève les morceaux trop courts ou incomplets
-      if (t.length < 5) {
-        return "Je n’ai pas de réponse utile à donner pour l’instant.";
-      }
-
-      return t;
-    }
-
-    // =========================================================
-    // GÉNÉRATION DE LA RÉPONSE
-    // =========================================================
-    async function genererReponse(texteUtilisateur) {
-      if (!generateur) {
-        return "L’assistant n’est pas encore prêt. Attends quelques instants puis réessaie.";
-      }
-
-      // On force le contexte en français pour limiter l’anglais
-      const prompt =
-        "Tu es un assistant qui répond en français simple et clair. " +
-        "Réponds en quelques phrases maximum, sans écrire d’histoires étranges.\n\n" +
-        "Utilisateur : " + texteUtilisateur + "\n" +
-        "Assistant :";
-
-      const resultats = await generateur(prompt, {
-        max_new_tokens: 80,
-        temperature: 0.7,
-        top_p: 0.9,
-        repetition_penalty: 1.1
-      });
-
-      const texteComplet = resultats[0]?.generated_text || "";
-      let reponseBrute;
-
-      if (texteComplet.startsWith(prompt)) {
-        reponseBrute = texteComplet.slice(prompt.length).trim();
-      } else {
-        reponseBrute = texteComplet.trim();
-      }
-
-      return nettoyerReponse(reponseBrute);
-    }
-
-    // =========================================================
-    // ENVOI DU MESSAGE
-    // =========================================================
     async function envoyerMessage() {
-      if (!modelePret || enCoursEnvoi) return;
+      if (enCoursEnvoi) return;
 
       const texte = entree.value.trim();
       if (!texte) return;
@@ -617,28 +398,16 @@
       boutonEnvoyer.disabled = true;
       boutonEnvoyer.classList.add("desactive");
 
-      afficherSaisie();
-
-      try {
-        const reponse = await genererReponse(texte);
-        cacherSaisie();
+      // Simulation d’un léger temps de réflexion
+      setTimeout(() => {
+        const reponse = genererReponseSimple(texte);
         ajouterMessage("assistant", reponse);
-      } catch (e) {
-        console.error("Erreur génération :", e);
-        cacherSaisie();
-        ajouterMessage("assistant", "Une erreur est survenue lors de la génération de la réponse.");
-      } finally {
         enCoursEnvoi = false;
-        if (modelePret) {
-          boutonEnvoyer.disabled = false;
-          boutonEnvoyer.classList.remove("desactive");
-        }
-      }
+        boutonEnvoyer.disabled = false;
+        boutonEnvoyer.classList.remove("desactive");
+      }, 300);
     }
 
-    // =========================================================
-    // GESTION DES ÉVÉNEMENTS
-    // =========================================================
     boutonEnvoyer.addEventListener("click", () => {
       envoyerMessage();
     });
@@ -653,6 +422,16 @@
     entree.addEventListener("input", () => {
       entree.style.height = "auto";
       entree.style.height = Math.min(entree.scrollHeight, 140) + "px";
+      const vide = entree.value.trim().length === 0;
+      boutonEnvoyer.disabled = vide || enCoursEnvoi;
+      boutonEnvoyer.classList.toggle("desactive", vide || enCoursEnvoi);
+    });
+
+    // Au démarrage : bouton actif si focus + texte
+    entree.addEventListener("focus", () => {
+      const vide = entree.value.trim().length === 0;
+      boutonEnvoyer.disabled = vide || enCoursEnvoi;
+      boutonEnvoyer.classList.toggle("desactive", vide || enCoursEnvoi);
     });
   </script>
 </body>
