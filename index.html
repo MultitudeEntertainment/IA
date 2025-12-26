@@ -2,82 +2,68 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Assistant IA simple (100% fonctionnel)</title>
+  <title>Assistant IA local (sans clé, sans serveur)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       height: 100%;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f3f4f6;
-      color: #111827;
+      background: #020617;
+      color: #e5e7eb;
     }
-
     body {
       display: flex;
       justify-content: center;
       align-items: stretch;
       overflow: hidden;
     }
-
     .app {
       width: 100%;
       height: 100vh;
-      max-width: 1100px;
-      background: #ffffff;
+      max-width: 1000px;
+      background: radial-gradient(circle at top, #0f172a 0, #020617 55%);
       display: flex;
       flex-direction: column;
-      border-left: 1px solid #e5e7eb;
-      border-right: 1px solid #e5e7eb;
+      border-left: 1px solid #111827;
+      border-right: 1px solid #111827;
     }
-
     header {
       flex-shrink: 0;
       padding: 14px 18px;
-      border-bottom: 1px solid #e5e7eb;
+      border-bottom: 1px solid #111827;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: #f9fafb;
+      background: linear-gradient(to right, #020617, #0b1120);
     }
-
-    .bloc-titre {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
+    .titre-bloc { display: flex; flex-direction: column; gap: 2px; }
     .titre {
       font-size: 16px;
       font-weight: 600;
-      color: #111827;
+      color: #e5e7eb;
     }
-
     .soustitre {
       font-size: 12px;
-      color: #6b7280;
+      color: #9ca3af;
     }
-
-    .bloc-etat {
+    .etat {
       display: flex;
       align-items: center;
       gap: 8px;
       font-size: 11px;
-      color: #4b5563;
+      color: #9ca3af;
     }
-
-    .point-etat {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
+    .point {
+      width: 9px; height: 9px; border-radius: 999px;
+      background: #b91c1c;
+      box-shadow: 0 0 8px rgba(185,28,28,0.7);
+      transition: background 0.2s ease, box-shadow 0.2s ease;
+    }
+    .point.ok {
       background: #22c55e;
+      box-shadow: 0 0 8px rgba(34,197,94,0.7);
     }
-
     .zone-chat {
       position: relative;
       flex: 1;
@@ -86,43 +72,25 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
-      background: #f3f4f6;
     }
-
     .placeholder {
       margin: auto;
       text-align: center;
-      max-width: 420px;
+      max-width: 460px;
       font-size: 14px;
-      color: #6b7280;
-      line-height: 1.5;
+      color: #9ca3af;
+      line-height: 1.6;
     }
-
     .placeholder strong {
       display: block;
-      margin-bottom: 4px;
-      color: #111827;
+      margin-bottom: 6px;
+      color: #e5e7eb;
+      font-size: 15px;
     }
-
-    .ligne-message {
-      display: flex;
-    }
-
-    .ligne-message.utilisateur {
-      justify-content: flex-end;
-    }
-
-    .ligne-message.assistant {
-      justify-content: flex-start;
-    }
-
-    .bloc-bulle {
-      max-width: 80%;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-    }
-
+    .ligne-message { display: flex; }
+    .ligne-message.utilisateur { justify-content: flex-end; }
+    .ligne-message.assistant { justify-content: flex-start; }
+    .bloc-bulle { max-width: 80%; display: flex; flex-direction: column; gap: 3px; }
     .bulle {
       padding: 10px 13px;
       border-radius: 16px;
@@ -132,194 +100,143 @@
       word-wrap: break-word;
       animation: apparition 0.18s ease-out;
     }
-
     .ligne-message.utilisateur .bulle {
-      background: #2563eb;
-      color: #ffffff;
+      background: linear-gradient(135deg, #2563eb, #4f46e5);
+      color: #f9fafb;
       border-bottom-right-radius: 4px;
     }
-
     .ligne-message.assistant .bulle {
-      background: #ffffff;
-      color: #111827;
-      border: 1px solid #e5e7eb;
+      background: rgba(15,23,42,0.96);
+      color: #e5e7eb;
+      border: 1px solid #1e293b;
       border-bottom-left-radius: 4px;
     }
-
     .meta {
       font-size: 11px;
-      color: #9ca3af;
+      color: #6b7280;
     }
-
     .barre-entree {
       flex-shrink: 0;
       padding: 10px 12px;
-      border-top: 1px solid #e5e7eb;
-      background: #f9fafb;
+      border-top: 1px solid #111827;
+      background: linear-gradient(to right, #020617, #020617);
       display: flex;
       align-items: flex-end;
       gap: 10px;
     }
-
-    .conteneur-entree {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
+    .conteneur-entree { flex: 1; display: flex; flex-direction: column; gap: 4px; }
     .entree {
       width: 100%;
-      min-height: 42px;
+      min-height: 44px;
       max-height: 140px;
       padding: 9px 10px;
       border-radius: 10px;
-      border: 1px solid #d1d5db;
-      background: #ffffff;
-      color: #111827;
+      border: 1px solid #1f2937;
+      background: #020617;
+      color: #e5e7eb;
       font-size: 14px;
       resize: none;
       outline: none;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
     }
-
-    .entree::placeholder {
-      color: #9ca3af;
-    }
-
+    .entree::placeholder { color: #6b7280; }
     .entree:focus {
       border-color: #3b82f6;
-      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.35);
+      box-shadow: 0 0 0 1px rgba(37,99,235,0.6);
+      background: #020617;
     }
-
     .astuce {
       font-size: 11px;
-      color: #9ca3af;
+      color: #6b7280;
       text-align: right;
     }
-
     .bouton-envoyer {
       width: 46px;
       height: 42px;
       border-radius: 12px;
       border: none;
-      background: #2563eb;
-      color: #ffffff;
+      background: radial-gradient(circle at top left, #4f46e5, #2563eb);
+      color: #f9fafb;
       font-size: 18px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: background 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease, opacity 0.15s ease;
-      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+      box-shadow: 0 6px 16px rgba(37,99,235,0.6);
     }
-
     .bouton-envoyer:hover {
-      background: #1d4ed8;
-      box-shadow: 0 6px 14px rgba(37, 99, 235, 0.4);
+      background: radial-gradient(circle at top left, #6366f1, #1d4ed8);
+      box-shadow: 0 8px 20px rgba(37,99,235,0.75);
       transform: translateY(-1px);
     }
-
     .bouton-envoyer:active {
       transform: translateY(1px) scale(0.97);
-      box-shadow: 0 3px 8px rgba(37, 99, 235, 0.3);
+      box-shadow: 0 4px 10px rgba(37,99,235,0.5);
     }
-
     .bouton-envoyer.desactive {
       opacity: 0.4;
       cursor: default;
       box-shadow: none;
       transform: none;
     }
-
     .typing {
       display: inline-flex;
       align-items: center;
       gap: 4px;
       padding: 6px 10px;
       border-radius: 999px;
-      background: #e5e7eb;
+      background: rgba(30,64,175,0.25);
       font-size: 11px;
-      color: #4b5563;
+      color: #9ca3af;
     }
-
     .typing-dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 999px;
-      background: #6b7280;
+      width: 5px; height: 5px; border-radius: 999px;
+      background: #9ca3af;
       opacity: 0.3;
       animation: clignote 1.3s infinite ease-in-out;
     }
-
-    .typing-dot:nth-child(2) {
-      animation-delay: 0.2s;
-    }
-
-    .typing-dot:nth-child(3) {
-      animation-delay: 0.4s;
-    }
-
+    .typing-dot:nth-child(2){ animation-delay: 0.2s; }
+    .typing-dot:nth-child(3){ animation-delay: 0.4s; }
     @keyframes apparition {
       from { opacity: 0; transform: translateY(4px); }
-      to   { opacity: 1; transform: translateY(0); }
+      to { opacity: 1; transform: translateY(0); }
     }
-
     @keyframes clignote {
-      0%, 60%, 100% { opacity: 0.25; transform: translateY(0); }
+      0%,60%,100% { opacity: 0.25; transform: translateY(0); }
       30% { opacity: 1; transform: translateY(-1px); }
     }
-
     @media (max-width: 768px) {
-      .app {
-        max-width: 100%;
-        border-left: none;
-        border-right: none;
-      }
-      header {
-        padding: 12px 14px;
-      }
-      .zone-chat {
-        padding: 10px 12px;
-      }
-      .bulle {
-        max-width: 90%;
-      }
-      .barre-entree {
-        padding: 8px 10px;
-      }
-      .entree {
-        font-size: 13px;
-      }
-      .astuce {
-        font-size: 10px;
-      }
-      .bouton-envoyer {
-        width: 42px;
-        height: 38px;
-        font-size: 16px;
-      }
+      .app { max-width: 100%; border-left: none; border-right: none; }
+      header { padding: 12px 14px; }
+      .zone-chat { padding: 10px 12px; }
+      .bulle { max-width: 90%; }
+      .barre-entree { padding: 8px 10px; }
+      .entree { font-size: 13px; }
+      .astuce { font-size: 10px; }
+      .bouton-envoyer { width: 42px; height: 38px; font-size: 16px; }
     }
   </style>
 </head>
 <body>
   <div class="app">
     <header>
-      <div class="bloc-titre">
-        <div class="titre">Assistant IA simple</div>
-        <div class="soustitre">Réponses en français (sans Internet)</div>
+      <div class="titre-bloc">
+        <div class="titre">Assistant IA local</div>
+        <div class="soustitre">Modèle open‑source dans ton navigateur · sans clé · sans serveur</div>
       </div>
-      <div class="bloc-etat">
-        <div class="point-etat"></div>
-        <div style="font-size:11px;color:#4b5563;">Actif</div>
+      <div class="etat">
+        <div class="point" id="point-etat"></div>
+        <div id="texte-etat">Initialisation du modèle…</div>
       </div>
     </header>
 
     <main class="zone-chat" id="zone-chat">
       <div class="placeholder" id="placeholder">
-        <strong>Bienvenue.</strong>
-        Cet assistant fonctionne à 100% sans connexion extérieure.<br />
-        Il connaît la date, l’heure et répond simplement à tes questions fréquentes en français.
+        <strong>Chargement d’une IA locale…</strong>
+        Le modèle est téléchargé et exécuté directement dans ton navigateur.<br />
+        Aucun serveur, aucune clé API, seulement la puissance de ta machine.<br /><br />
+        Le premier chargement peut être long (fichiers volumineux). Laisse la page ouverte.
       </div>
     </main>
 
@@ -328,20 +245,26 @@
         <textarea
           id="entree"
           class="entree"
-          placeholder="Écris ici… (Entrée pour envoyer, Shift+Entrée pour un retour à la ligne)"
+          placeholder="Écris ici… (Entrée pour envoyer, Shift+Entrée pour retour à la ligne, attendre la fin du chargement du modèle)"
         ></textarea>
-        <div class="astuce">Entrée pour envoyer · Shift+Entrée pour retour à la ligne</div>
+        <div class="astuce">Entrée pour envoyer · IA 100% locale (sans clé, sans serveur)</div>
       </div>
       <button id="bouton-envoyer" class="bouton-envoyer desactive" disabled>➤</button>
     </footer>
   </div>
 
-  <script>
+  <!-- On charge WebLLM en module ES -->
+  <script type="module">
+    import * as webllm from "https://unpkg.com/@mlc-ai/web-llm@latest/dist/web-llm.mjs";
+
     const zoneChat = document.getElementById("zone-chat");
     const placeholder = document.getElementById("placeholder");
     const entree = document.getElementById("entree");
     const boutonEnvoyer = document.getElementById("bouton-envoyer");
+    const pointEtat = document.getElementById("point-etat");
+    const texteEtat = document.getElementById("texte-etat");
 
+    let engine = null;
     let enCoursEnvoi = false;
     let blocTyping = null;
 
@@ -353,9 +276,8 @@
 
     function ajouterMessage(role, texte) {
       retirerPlaceholder();
-
       const ligne = document.createElement("div");
-      ligne.className = "ligne-message " + role;
+      ligne.className = "ligne-message " + (role === "utilisateur" ? "utilisateur" : "assistant");
 
       const bloc = document.createElement("div");
       bloc.className = "bloc-bulle";
@@ -366,19 +288,17 @@
 
       const meta = document.createElement("div");
       meta.className = "meta";
-      meta.textContent = role === "utilisateur" ? "Vous" : "Assistant";
+      meta.textContent = role === "utilisateur" ? "Vous" : "Assistant local";
 
       bloc.appendChild(bulle);
       bloc.appendChild(meta);
       ligne.appendChild(bloc);
       zoneChat.appendChild(ligne);
-
       zoneChat.scrollTop = zoneChat.scrollHeight;
     }
 
     function afficherTyping() {
       if (blocTyping) return;
-
       blocTyping = document.createElement("div");
       blocTyping.className = "ligne-message assistant";
 
@@ -388,7 +308,7 @@
       const bulle = document.createElement("div");
       bulle.className = "typing";
       bulle.innerHTML = `
-        <span>Réflexion...</span>
+        <span>Réflexion locale...</span>
         <div class="typing-dot"></div>
         <div class="typing-dot"></div>
         <div class="typing-dot"></div>
@@ -407,123 +327,90 @@
       blocTyping = null;
     }
 
-    function infosTemps() {
-      const now = new Date();
-      const jours = ["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"];
-      const mois = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
-      return {
-        jourSemaine: jours[now.getDay()],
-        jour: now.getDate(),
-        moisNom: mois[now.getMonth()],
-        annee: now.getFullYear(),
-        heure: String(now.getHours()).padStart(2,"0"),
-        minute: String(now.getMinutes()).padStart(2,"0")
-      };
+    async function initialiserModele() {
+      try {
+        texteEtat.textContent = "Préparation du modèle IA local…";
+        pointEtat.classList.remove("ok");
+
+        const config = {
+          // Tu peux tester d'autres modèles supportés par WebLLM, mais celui-ci est plus léger
+          model: "Llama-3.2-1B-instruct-q4f32_1-MLC",
+        };
+
+        engine = await webllm.createWebWorkerEngine(
+          new URL("https://unpkg.com/@mlc-ai/web-llm@latest/dist/worker.js", import.meta.url).toString(),
+          config,
+          {
+            initProgressCallback: (report) => {
+              if (report.text) {
+                texteEtat.textContent = report.text;
+              } else if (report.progress) {
+                const p = Math.round(report.progress * 100);
+                texteEtat.textContent = "Chargement du modèle… " + p + "%";
+              }
+            },
+          }
+        );
+
+        texteEtat.textContent = "Modèle local prêt. Tu peux poser une question.";
+        pointEtat.classList.add("ok");
+        boutonEnvoyer.disabled = false;
+        boutonEnvoyer.classList.remove("desactive");
+
+        ajouterMessage(
+          "assistant",
+          "Bonjour, je suis une IA locale exécutée directement dans ton navigateur, sans serveur ni clé API. " +
+          "Je suis moins puissante qu’un grand modèle en ligne, mais je peux tout de même discuter et répondre à tes questions en français."
+        );
+      } catch (e) {
+        console.error(e);
+        texteEtat.textContent = "Échec du chargement du modèle (navigateur non compatible ?)";
+        pointEtat.classList.remove("ok");
+        boutonEnvoyer.disabled = true;
+        boutonEnvoyer.classList.add("desactive");
+        ajouterMessage(
+          "assistant",
+          "Je n’ai pas réussi à charger le modèle IA local. Vérifie que ton navigateur est récent et que WebGPU est disponible (Chrome/Edge recommandé)."
+        );
+      }
     }
 
-    function reponseLocale(message) {
-      const brut = message || "";
-      const t = brut.toLowerCase().trim();
-
-      if (!t) {
-        return "Je n’ai pas reçu de question. Écris-moi quelques mots.";
+    async function genererReponse(promptUtilisateur) {
+      if (!engine) {
+        return "Le modèle local n’est pas encore prêt.";
       }
 
-      // Salutations
-      if (t.match(/\b(bonjour|salut|coucou|bonsoir|yo|wesh)\b/)) {
-        return "Bonjour ! Que veux-tu savoir ?";
+      const conversation = [
+        {
+          role: "system",
+          content:
+            "Tu es un assistant IA exécuté localement dans le navigateur, sans accès à Internet. " +
+            "Tu réponds toujours en français. Si une information dépasse tes capacités ou nécessite le web, " +
+            "tu le précises honnêtement.",
+        },
+        {
+          role: "user",
+          content: promptUtilisateur,
+        },
+      ];
+
+      const generator = await engine.chat.completions.create({
+        messages: conversation,
+        stream: true,
+        max_tokens: 256,
+        temperature: 0.7,
+      });
+
+      let texte = "";
+      for await (const part of generator) {
+        const delta = part.choices?.[0]?.delta?.content ?? "";
+        texte += delta;
       }
-
-      // Comment ça va
-      if (t.includes("ça va") || t.includes("ca va")) {
-        return "Je vais bien, merci. Et toi, comment tu vas ?";
-      }
-
-      const { jourSemaine, jour, moisNom, annee, heure, minute } = infosTemps();
-
-      // Date complète
-      if (
-        t.includes("quel jour sommes") ||
-        t.includes("quel jour sommes-nous") ||
-        t.includes("quel jour est-il") ||
-        t.includes("on est quel jour") ||
-        t.includes("c'est quel jour") ||
-        t.includes("c est quel jour") ||
-        t.includes("quel jour on est") ||
-        t.includes("nous sommes quel jour")
-      ) {
-        return "Nous sommes " + jourSemaine + " " + jour + " " + moisNom + " " + annee + ".";
-      }
-
-      // Jour de la semaine
-      if (t.includes("quel jour de la semaine") || t.includes("jour de la semaine")) {
-        return "Aujourd’hui, nous sommes " + jourSemaine + ".";
-      }
-
-      // Mois
-      if (
-        t.includes("quel mois") ||
-        t.includes("on est quel mois") ||
-        t.includes("c'est quel mois") ||
-        t.includes("c est quel mois") ||
-        t.includes("nous sommes quel mois")
-      ) {
-        return "Nous sommes en " + moisNom + " " + annee + ".";
-      }
-
-      // Année
-      if (
-        t.includes("quelle année") ||
-        t.includes("quelle annee") ||
-        t.includes("on est en quelle année") ||
-        t.includes("on est en quelle annee") ||
-        t.includes("en quelle année sommes-nous") ||
-        t.includes("en quelle annee sommes nous") ||
-        t.includes("nous sommes en quelle année")
-      ) {
-        return "Nous sommes en " + annee + ".";
-      }
-
-      // Heure
-      if (
-        (t.includes("heure") && !t.includes("heureux")) ||
-        t.includes("il est quelle heure") ||
-        t.includes("donne l'heure") ||
-        t.includes("donne l heure")
-      ) {
-        return "Il est " + heure + "h" + minute + " d’après l’horloge de ton appareil.";
-      }
-
-      // Questions type "c'est quoi", "qui est"
-      if (
-        t.startsWith("c'est quoi") || t.startsWith("c est quoi") ||
-        t.startsWith("qu'est-ce que") || t.startsWith("qu est ce que") ||
-        t.startsWith("qui est") || t.startsWith("qui était") || t.startsWith("qui etait")
-      ) {
-        return "Je suis un assistant simple sans connexion Internet. Je ne peux pas tout connaître, mais tu peux préciser ce que tu veux comprendre, et je peux t’aider à reformuler ou te donner une explication générale.";
-      }
-
-      // Aide
-      if (t.includes("aide") || t.includes("peux-tu m'aider") || t.includes("peux tu m aider")) {
-        return "Je peux te donner la date, l’heure, réagir à des questions simples et t’aider à reformuler des phrases ou des idées en français.";
-      }
-
-      // Reformulation
-      if (t.startsWith("reformule ") || t.startsWith("reformule:") || t.startsWith("reformule :")) {
-        const texteAReformuler = brut.replace(/reformule\s*:?\s*/i, "");
-        if (!texteAReformuler.trim()) {
-          return "Colle la phrase à reformuler après \"reformule\" et je te proposerai une version plus claire.";
-        }
-        return "Voici une reformulation possible :\n\n" + texteAReformuler.trim();
-      }
-
-      // Fallback générique
-      return "Je suis un assistant simple sans accès à toute la connaissance du monde. Je peux t’aider pour la date, l’heure, des petites explications ou des reformulations en français, mais je ne peux pas répondre à toutes les questions de culture générale.";
+      return texte || "Je n’ai pas réussi à générer une réponse.";
     }
 
     async function envoyerMessage() {
       if (enCoursEnvoi) return;
-
       const texte = entree.value.trim();
       if (!texte) return;
 
@@ -537,16 +424,23 @@
 
       afficherTyping();
 
-      setTimeout(() => {
-        const reponse = reponseLocale(texte);
+      try {
+        const reponse = await genererReponse(texte);
         cacherTyping();
         ajouterMessage("assistant", reponse);
+      } catch (e) {
+        console.error(e);
+        cacherTyping();
+        ajouterMessage(
+          "assistant",
+          "Erreur lors de la génération locale. Il se peut que la mémoire soit insuffisante ou que le navigateur limite l’exécution du modèle."
+        );
+      } finally {
         enCoursEnvoi = false;
-
         const vide = entree.value.trim().length === 0;
-        boutonEnvoyer.disabled = vide;
-        boutonEnvoyer.classList.toggle("desactive", vide);
-      }, 300);
+        boutonEnvoyer.disabled = vide || !engine;
+        boutonEnvoyer.classList.toggle("desactive", boutonEnvoyer.disabled);
+      }
     }
 
     boutonEnvoyer.addEventListener("click", envoyerMessage);
@@ -562,14 +456,14 @@
       entree.style.height = "auto";
       entree.style.height = Math.min(entree.scrollHeight, 140) + "px";
       const vide = entree.value.trim().length === 0;
-      if (!enCoursEnvoi) {
+      if (!enCoursEnvoi && engine) {
         boutonEnvoyer.disabled = vide;
         boutonEnvoyer.classList.toggle("desactive", vide);
       }
     });
 
-    boutonEnvoyer.disabled = true;
-    boutonEnvoyer.classList.add("desactive");
+    // Lancement du chargement du modèle au démarrage
+    initialiserModele();
   </script>
 </body>
 </html>
