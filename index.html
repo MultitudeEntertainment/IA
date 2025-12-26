@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Assistant IA (simple, stable)</title>
+  <title>Assistant IA connecté à Internet</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     * {
@@ -232,9 +232,42 @@
       transform: none;
     }
 
+    .typing {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      font-size: 11px;
+      color: #4b5563;
+    }
+
+    .typing-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 999px;
+      background: #6b7280;
+      opacity: 0.3;
+      animation: clignote 1.3s infinite ease-in-out;
+    }
+
+    .typing-dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing-dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
     @keyframes apparition {
       from { opacity: 0; transform: translateY(4px); }
       to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes clignote {
+      0%, 60%, 100% { opacity: 0.25; transform: translateY(0); }
+      30% { opacity: 1; transform: translateY(-1px); }
     }
 
     @media (max-width: 768px) {
@@ -274,19 +307,19 @@
     <header>
       <div class="bloc-titre">
         <div class="titre">Assistant IA</div>
-        <div class="soustitre">Conversation en français (mode simple)</div>
+        <div class="soustitre">Réponses en français avec Internet</div>
       </div>
       <div class="bloc-etat">
         <div class="point-etat"></div>
-        <div>Actif</div>
+        <div style="font-size:11px;color:#4b5563;">En ligne (Wikipédia)</div>
       </div>
     </header>
 
     <main class="zone-chat" id="zone-chat">
       <div class="placeholder" id="placeholder">
         <strong>Bienvenue.</strong>
-        Écris un message en bas pour commencer.<br />
-        L’assistant répondra en français de manière simple et cohérente.
+        Pose une question sur n’importe quel sujet : date, heure, avion, pays, personne, concept, etc.<br />
+        L’assistant utilise l’horloge de ton appareil et Wikipédia (FR/EN) pour répondre.
       </div>
     </main>
 
@@ -310,6 +343,7 @@
     const boutonEnvoyer = document.getElementById("bouton-envoyer");
 
     let enCoursEnvoi = false;
+    let blocTyping = null;
 
     function retirerPlaceholder() {
       if (placeholder && placeholder.parentNode) {
@@ -342,46 +376,192 @@
       zoneChat.scrollTop = zoneChat.scrollHeight;
     }
 
-    // "IA" simple basée sur des règles en français
-    function genererReponseSimple(message) {
-      const texte = message.toLowerCase().trim();
+    function afficherTyping() {
+      if (blocTyping) return;
+      blocTyping = document.createElement("div");
+      blocTyping.className = "ligne-message assistant";
 
-      if (!texte) {
-        return "Je n’ai rien reçu, tu peux réessayer en écrivant quelques mots ?";
+      const bloc = document.createElement("div");
+      bloc.className = "bloc-bulle";
+
+      const bulle = document.createElement("div");
+      bulle.className = "typing";
+      bulle.innerHTML = `
+        <span>Recherche...</span>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      `;
+
+      bloc.appendChild(bulle);
+      blocTyping.appendChild(bloc);
+      zoneChat.appendChild(blocTyping);
+      zoneChat.scrollTop = zoneChat.scrollHeight;
+    }
+
+    function cacherTyping() {
+      if (blocTyping && blocTyping.parentNode) {
+        blocTyping.remove();
+      }
+      blocTyping = null;
+    }
+
+    // =========================
+    // RÉPONSES LOCALES (date, heure, salut, aide)
+    // =========================
+    function reponseLocale(message) {
+      const t = message.toLowerCase().trim();
+
+      if (!t) {
+        return "Je n’ai pas reçu de texte, essaie d’écrire une question ou une phrase.";
       }
 
-      // Salutations
-      if (texte.match(/\b(bonjour|salut|coucou|bonsoir)\b/)) {
-        return "Bonjour ! Comment puis-je t’aider ?";
+      if (t.match(/\b(bonjour|salut|coucou|bonsoir)\b/)) {
+        return "Bonjour ! Que veux-tu savoir ?";
       }
 
-      // Demande d'aide
-      if (texte.includes("aide") || texte.includes("aider") || texte.includes("peux-tu")) {
-        return "Je peux t’aider à reformuler un texte, expliquer une idée simplement, ou te donner des pistes sur un sujet. Dis-moi ce dont tu as besoin.";
+      if (t.includes("comment ça va") || t.includes("comment ca va") || t.includes("ça va") || t.includes("ca va")) {
+        return "Je fonctionne bien. Et toi, comment tu vas ?";
       }
 
-      // Reformulation
-      if (texte.includes("reformule") || texte.includes("reformuler")) {
-        return "Colle-moi la phrase ou le texte à reformuler, et je te proposerai une version plus claire en français.";
+      const maintenant = new Date();
+      const jours = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+      const mois = [
+        "janvier","février","mars","avril","mai","juin",
+        "juillet","août","septembre","octobre","novembre","décembre"
+      ];
+      const jourSemaine = jours[maintenant.getDay()];
+      const jour = maintenant.getDate();
+      const moisNom = mois[maintenant.getMonth()];
+      const annee = maintenant.getFullYear();
+      const h = String(maintenant.getHours()).padStart(2, "0");
+      const m = String(maintenant.getMinutes()).padStart(2, "0");
+
+      if (
+        t.includes("quel jour sommes") ||
+        t.includes("quel jour sommes-nous") ||
+        t.includes("quel jour est-il") ||
+        t.includes("on est quel jour") ||
+        t.includes("c'est quel jour") ||
+        t.includes("c est quel jour")
+      ) {
+        return "Nous sommes le " + jourSemaine + " " + jour + " " + moisNom + " " + annee + ".";
       }
 
-      // Explication
-      if (texte.includes("explique") || texte.includes("expliquer")) {
-        return "Dis-moi ce que tu veux que j’explique, et je te donnerai une explication simple, étape par étape.";
+      if (t.includes("quel jour de la semaine") || t.includes("jour de la semaine")) {
+        return "Aujourd’hui, nous sommes " + jourSemaine + ".";
       }
 
-      // Texte créatif
-      if (texte.includes("histoire") || texte.includes("raconte") || texte.includes("texte créatif")) {
-        return "Je peux t’inventer un petit texte créatif en français. Par exemple :\n\n« Un matin, tout semblait normal. Pourtant, un simple message allait changer la journée : quelqu’un avait enfin créé une IA qui répondait calmement, sans phrases bizarres. »";
+      if (
+        t.includes("quel mois") ||
+        t.includes("on est quel mois") ||
+        t.includes("c'est quel mois") ||
+        t.includes("c est quel mois")
+      ) {
+        return "Nous sommes au mois de " + moisNom + " " + annee + ".";
       }
 
-      // Travail / école
-      if (texte.includes("devoir") || texte.includes("exercice") || texte.includes("école") || texte.includes("cours")) {
-        return "Je peux t’aider à mieux comprendre ton cours, à résumer une notion, ou à t’expliquer un exercice (sans tout faire à ta place). Dis-moi le sujet.";
+      if (
+        t.includes("quelle année") ||
+        t.includes("on est en quelle année") ||
+        t.includes("en quelle année sommes-nous") ||
+        t.includes("en quelle annee sommes nous")
+      ) {
+        return "Nous sommes en " + annee + ".";
       }
 
-      // Par défaut
-      return "D’accord, je vois. Tu peux me préciser ce que tu attends de moi : une explication, une reformulation, une idée, ou un petit texte ? Je reste en français et j’essaie de rester simple.";
+      if (
+        t.includes("quelle heure") ||
+        t.includes("il est quelle heure") ||
+        t.includes("c'est quelle heure") ||
+        t.includes("c est quelle heure")
+      ) {
+        return "Il est environ " + h + "h" + m + " selon l’horloge de ton appareil.";
+      }
+
+      if (t.includes("aide") || t.includes("peux-tu m'aider") || t.includes("peux tu m aider")) {
+        return "Je peux te donner la date, l’heure, et des informations sur beaucoup de sujets grâce à Wikipédia. Pose ta question directement.";
+      }
+
+      return null; // le reste part vers le web
+    }
+
+    // =========================
+    // EXTRACTION DU SUJET POUR WIKIPÉDIA
+    // =========================
+    function extraireSujetPourWiki(message) {
+      let t = message.toLowerCase().trim();
+
+      t = t
+        .replace(/^c'?est quoi\s+/i, "")
+        .replace(/^qu[’']?est-ce que\s+/i, "")
+        .replace(/^qu[’']?est ce que\s+/i, "")
+        .replace(/^qui est\s+/i, "")
+        .replace(/^qu'est-ce qu'un\s+/i, "")
+        .replace(/^qu'est-ce qu'une\s+/i, "")
+        .replace(/^parle-moi de\s+/i, "")
+        .replace(/^parle moi de\s+/i, "")
+        .replace(/^dis m[oi]+\s+ce que tu sais sur\s+/i, "");
+
+      t = t.replace(/[?!.,;:]+$/g, "").trim();
+
+      if (!t) return null;
+
+      t = t
+        .split(/\s+/)
+        .map((mot) => mot.charAt(0).toUpperCase() + mot.slice(1))
+        .join(" ");
+
+      return t;
+    }
+
+    async function requeteWikipedia(titre, langue) {
+      const url = "https://" + langue + ".wikipedia.org/api/rest_v1/page/summary/" +
+        encodeURIComponent(titre);
+
+      const res = await fetch(url);
+      if (!res.ok) {
+        throw new Error("Erreur HTTP Wikipédia " + langue);
+      }
+      const data = await res.json();
+      if (!data.extract) {
+        throw new Error("Pas d’extrait pour ce sujet.");
+      }
+      return {
+        titre: data.title,
+        resume: data.extract
+      };
+    }
+
+    async function reponseWeb(message) {
+      const sujet = extraireSujetPourWiki(message);
+      if (!sujet) {
+        throw new Error("Sujet introuvable dans la question.");
+      }
+
+      try {
+        const fr = await requeteWikipedia(sujet, "fr");
+        return "Voici un résumé de « " + fr.titre + " » d’après Wikipédia (FR) :\n\n" + fr.resume;
+      } catch (e) {
+        try {
+          const en = await requeteWikipedia(sujet, "en");
+          return (
+            "Je n’ai pas trouvé de page claire en français, mais voici un résumé de « " +
+            en.titre +
+            " » d’après Wikipédia (EN) :\n\n" +
+            en.resume
+          );
+        } catch (e2) {
+          throw new Error("Impossible de récupérer des infos sur ce sujet.");
+        }
+      }
+    }
+
+    async function genererReponse(message) {
+      const locale = reponseLocale(message);
+      if (locale) return locale;
+      const web = await reponseWeb(message);
+      return web;
     }
 
     async function envoyerMessage() {
@@ -398,14 +578,26 @@
       boutonEnvoyer.disabled = true;
       boutonEnvoyer.classList.add("desactive");
 
-      // Simulation d’un léger temps de réflexion
-      setTimeout(() => {
-        const reponse = genererReponseSimple(texte);
+      afficherTyping();
+
+      try {
+        const reponse = await genererReponse(texte);
+        cacherTyping();
         ajouterMessage("assistant", reponse);
+      } catch (e) {
+        console.error(e);
+        cacherTyping();
+        ajouterMessage(
+          "assistant",
+          "Je n’ai pas réussi à trouver une réponse claire pour cette question. " +
+          "Essaie de reformuler, ou pose une autre question plus précise."
+        );
+      } finally {
         enCoursEnvoi = false;
-        boutonEnvoyer.disabled = false;
-        boutonEnvoyer.classList.remove("desactive");
-      }, 300);
+        const vide = entree.value.trim().length === 0;
+        boutonEnvoyer.disabled = vide;
+        boutonEnvoyer.classList.toggle("desactive", vide);
+      }
     }
 
     boutonEnvoyer.addEventListener("click", () => {
@@ -423,16 +615,14 @@
       entree.style.height = "auto";
       entree.style.height = Math.min(entree.scrollHeight, 140) + "px";
       const vide = entree.value.trim().length === 0;
-      boutonEnvoyer.disabled = vide || enCoursEnvoi;
-      boutonEnvoyer.classList.toggle("desactive", vide || enCoursEnvoi);
+      if (!enCoursEnvoi) {
+        boutonEnvoyer.disabled = vide;
+        boutonEnvoyer.classList.toggle("desactive", vide);
+      }
     });
 
-    // Au démarrage : bouton actif si focus + texte
-    entree.addEventListener("focus", () => {
-      const vide = entree.value.trim().length === 0;
-      boutonEnvoyer.disabled = vide || enCoursEnvoi;
-      boutonEnvoyer.classList.toggle("desactive", vide || enCoursEnvoi);
-    });
+    boutonEnvoyer.disabled = true;
+    boutonEnvoyer.classList.add("desactive");
   </script>
 </body>
 </html>
