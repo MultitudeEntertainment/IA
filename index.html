@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Assistant IA connecté à Internet</title>
+  <title>Assistant IA</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     * {
@@ -307,7 +307,7 @@
     <header>
       <div class="bloc-titre">
         <div class="titre">Assistant IA</div>
-        <div class="soustitre">Réponses en français</div>
+        <div class="soustitre">Conversation en français</div>
       </div>
       <div class="bloc-etat">
         <div class="point-etat"></div>
@@ -337,6 +337,7 @@
   </div>
 
   <script>
+    // Références DOM
     const zoneChat = document.getElementById("zone-chat");
     const placeholder = document.getElementById("placeholder");
     const entree = document.getElementById("entree");
@@ -355,7 +356,7 @@
       retirerPlaceholder();
 
       const ligne = document.createElement("div");
-      ligne.className = "ligne-message " + role;
+      ligne.className = "ligne-message " + (role === "utilisateur" ? "utilisateur" : "assistant");
 
       const bloc = document.createElement("div");
       bloc.className = "bloc-bulle";
@@ -378,6 +379,7 @@
 
     function afficherTyping() {
       if (blocTyping) return;
+
       blocTyping = document.createElement("div");
       blocTyping.className = "ligne-message assistant";
 
@@ -406,38 +408,36 @@
       blocTyping = null;
     }
 
-    // =========================
-    // RÉPONSES LOCALES (date / heure / salut)
-    // =========================
+    // ===== Temps / date =====
+    function infosTemps() {
+      const now = new Date();
+      const jours = ["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"];
+      const mois = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+      return {
+        jourSemaine: jours[now.getDay()],
+        jour: now.getDate(),
+        moisNom: mois[now.getMonth()],
+        annee: now.getFullYear(),
+        heure: String(now.getHours()).padStart(2,"0"),
+        minute: String(now.getMinutes()).padStart(2,"0")
+      };
+    }
+
+    // ===== IA locale (salut, date, heure, etc.) =====
     function reponseLocale(message) {
       const t = message.toLowerCase().trim();
-
-      if (!t) {
-        return "Je n’ai pas reçu de texte, essaie d’écrire une question ou une phrase.";
-      }
+      if (!t) return "Je n’ai rien reçu, essaie de reformuler ta question.";
 
       if (t.match(/\b(bonjour|salut|coucou|bonsoir)\b/)) {
         return "Bonjour ! Que veux-tu savoir ?";
       }
 
-      if (t.includes("comment ça va") || t.includes("comment ca va") || t.includes("ça va") || t.includes("ca va")) {
-        return "Je fonctionne bien. Et toi, comment tu vas ?";
+      if (t.includes("ça va") || t.includes("ca va")) {
+        return "Je vais bien, merci. Et toi ?";
       }
 
-      const maintenant = new Date();
-      const jours = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
-      const mois = [
-        "janvier","février","mars","avril","mai","juin",
-        "juillet","août","septembre","octobre","novembre","décembre"
-      ];
-      const jourSemaine = jours[maintenant.getDay()];
-      const jour = maintenant.getDate();
-      const moisNom = mois[maintenant.getMonth()];
-      const annee = maintenant.getFullYear();
-      const h = String(maintenant.getHours()).padStart(2, "0");
-      const m = String(maintenant.getMinutes()).padStart(2, "0");
+      const { jourSemaine, jour, moisNom, annee, heure, minute } = infosTemps();
 
-      // variantes pour la date complète
       if (
         t.includes("quel jour sommes") ||
         t.includes("quel jour sommes-nous") ||
@@ -448,10 +448,13 @@
         t.includes("quel jour on est") ||
         t.includes("nous sommes quel jour")
       ) {
-        return "Nous sommes le " + jourSemaine + " " + jour + " " + moisNom + " " + annee + ".";
+        return "Nous sommes " + jourSemaine + " " + jour + " " + moisNom + " " + annee + ".";
       }
 
-      if (t.includes("quel jour de la semaine") || t.includes("jour de la semaine")) {
+      if (
+        t.includes("quel jour de la semaine") ||
+        t.includes("jour de la semaine")
+      ) {
         return "Aujourd’hui, nous sommes " + jourSemaine + ".";
       }
 
@@ -462,12 +465,14 @@
         t.includes("c est quel mois") ||
         t.includes("nous sommes quel mois")
       ) {
-        return "Nous sommes au mois de " + moisNom + " " + annee + ".";
+        return "Nous sommes en " + moisNom + " " + annee + ".";
       }
 
       if (
         t.includes("quelle année") ||
+        t.includes("quelle annee") ||
         t.includes("on est en quelle année") ||
+        t.includes("on est en quelle annee") ||
         t.includes("en quelle année sommes-nous") ||
         t.includes("en quelle annee sommes nous") ||
         t.includes("nous sommes en quelle année")
@@ -475,131 +480,117 @@
         return "Nous sommes en " + annee + ".";
       }
 
-      // pour l'heure : on attrape large dès qu'il y a "heure"
       if (
-        t.includes("quelle heure") ||
+        (t.includes("heure") && !t.includes("heureux")) ||
         t.includes("il est quelle heure") ||
-        t.includes("c'est quelle heure") ||
-        t.includes("c est quelle heure") ||
         t.includes("donne l'heure") ||
-        t.includes("donne l heure") ||
-        (t.includes("heure") && !t.includes("heureux")) // si le mot "heure" apparaît
+        t.includes("donne l heure")
       ) {
-        return "Il est environ " + h + "h" + m + " selon l’horloge de ton appareil.";
+        return "Il est " + heure + "h" + minute + " d’après l’horloge de ton appareil.";
       }
 
       if (t.includes("aide")) {
-        return "Je peux te donner la date, l’heure, et des informations générales sur beaucoup de sujets. Pose ta question directement.";
+        return "Tu peux me poser des questions sur la date, l’heure ou presque n’importe quel sujet. Je vais chercher des infos et te les résumer.";
       }
 
-      return null; // le reste ira sur Internet
+      return null; // le reste → Internet
     }
 
-    // =========================
-    // EXTRACTION SUJET POUR RECHERCHE
-    // =========================
-    function extraireSujetPourWiki(message) {
-      let t = message.toLowerCase().trim();
+    // ===== Préparation de la requête pour le web =====
+    function nettoyerQuestionPourRecherche(message) {
+      let t = message.trim();
 
-      t = t
-        .replace(/^c'?est quoi\s+/i, "")
-        .replace(/^qu[’']?est-ce que\s+/i, "")
-        .replace(/^qu[’']?est ce que\s+/i, "")
-        .replace(/^qui est\s+/i, "")
-        .replace(/^qu'est-ce qu'un\s+/i, "")
-        .replace(/^qu'est-ce qu'une\s+/i, "")
-        .replace(/^parle-moi de\s+/i, "")
-        .replace(/^parle moi de\s+/i, "")
-        .replace(/^dis m[oi]+\s+ce que tu sais sur\s+/i, "");
+      const debuts = [
+        /^c'?est quoi\s+/i,
+        /^qu[’']?est-ce que\s+/i,
+        /^qu[’']?est ce que\s+/i,
+        /^qui est\s+/i,
+        /^qui était\s+/i,
+        /^qui etait\s+/i,
+        /^parle[- ]?moi de\s+/i,
+        /^explique[- ]?moi\s+/i,
+        /^dis[- ]?moi ce que tu sais sur\s+/i,
+        /^donne[- ]?moi des infos sur\s+/i,
+        /^donne[- ]?moi des informations sur\s+/i,
+      ];
+
+      for (const reg of debuts) {
+        t = t.replace(reg, "");
+      }
 
       t = t.replace(/[?!.,;:]+$/g, "").trim();
-
-      if (!t) return null;
-
-      t = t
-        .split(/\s+/)
-        .map((mot) => mot.charAt(0).toUpperCase() + mot.slice(1))
-        .join(" ");
-
+      if (!t) t = message.trim();
       return t;
     }
 
-    async function requeteWikipedia(titre, langue) {
-      const url = "https://" + langue + ".wikipedia.org/api/rest_v1/page/summary/" +
-        encodeURIComponent(titre);
+    // ===== DuckDuckGo =====
+    async function rechercheInternet(message) {
+      const q = nettoyerQuestionPourRecherche(message);
 
-      const res = await fetch(url);
-      if (!res.ok) {
-        throw new Error("Erreur HTTP Wikipédia " + langue);
-      }
-      const data = await res.json();
-      if (!data.extract) {
-        throw new Error("Pas d’extrait pour ce sujet.");
-      }
-      return {
-        titre: data.title,
-        resume: data.extract
-      };
-    }
-
-    async function requeteDuckDuckGo(message) {
-      const url = "https://api.duckduckgo.com/?q=" +
-        encodeURIComponent(message) +
+      const url =
+        "https://api.duckduckgo.com/?q=" +
+        encodeURIComponent(q) +
         "&format=json&no_html=1&no_redirect=1";
 
       const res = await fetch(url);
-      if (!res.ok) {
-        throw new Error("Erreur HTTP DuckDuckGo");
-      }
+      if (!res.ok) throw new Error("Erreur réseau");
+
       const data = await res.json();
 
       let texte =
         data.Abstract ||
         data.AbstractText ||
-        (data.RelatedTopics && data.RelatedTopics[0] && data.RelatedTopics[0].Text) ||
+        (data.RelatedTopics &&
+          data.RelatedTopics.length > 0 &&
+          data.RelatedTopics[0].Text) ||
         "";
 
       texte = (texte || "").trim();
-      if (!texte) {
-        throw new Error("Pas de résumé pertinent trouvé.");
-      }
+      if (!texte) throw new Error("Aucune info trouvée");
 
-      return texte;
+      return { qNettoyee: q, texte };
     }
 
-    async function reponseWeb(message) {
-      const sujet = extraireSujetPourWiki(message) || message.trim();
-      if (!sujet) {
-        throw new Error("Sujet introuvable dans la question.");
+    function nettoyerTexte(texte) {
+      return texte
+        .replace(/\s+/g, " ")
+        .replace(/\s+([?.!,;:])/g, "$1")
+        .trim();
+    }
+
+    function formaterReponseInternet(question, texteSource) {
+      const q = question.toLowerCase().trim();
+      let intro = "Voici ce que j’ai trouvé :\n\n";
+
+      if (q.startsWith("qui est") || q.startsWith("qui était") || q.startsWith("qui etait")) {
+        intro = "Voici une description :\n\n";
+      } else if (q.startsWith("c'est quoi") || q.startsWith("c est quoi") ||
+                 q.startsWith("qu'est-ce que") || q.startsWith("qu est ce que")) {
+        intro = "Voici une définition possible :\n\n";
+      } else if (q.startsWith("parle moi de") || q.startsWith("parle-moi de")) {
+        intro = "Voici quelques informations utiles :\n\n";
       }
 
-      // 1) Essai Wikipédia FR
-      try {
-        const fr = await requeteWikipedia(sujet, "fr");
-        return "Voici un résumé :\n\n" + fr.resume;
-      } catch (e) {
-        // 2) Essai Wikipédia EN
-        try {
-          const en = await requeteWikipedia(sujet, "en");
-          return "Voici un résumé :\n\n" + en.resume;
-        } catch (e2) {
-          // 3) Essai DuckDuckGo
-          const ddg = await requeteDuckDuckGo(sujet);
-          return "Voici un résumé :\n\n" + ddg;
-        }
-      }
+      const propre = nettoyerTexte(texteSource);
+      return intro + propre;
     }
 
     async function genererReponse(message) {
       const locale = reponseLocale(message);
       if (locale) return locale;
-      const web = await reponseWeb(message);
-      return web;
+
+      try {
+        const { texte } = await rechercheInternet(message);
+        return formaterReponseInternet(message, texte);
+      } catch (e) {
+        console.error(e);
+        return "Je n’ai pas réussi à trouver une réponse claire pour cette question. Essaie de reformuler ou pose autre chose.";
+      }
     }
 
+    // ===== envoi =====
     async function envoyerMessage() {
       if (enCoursEnvoi) return;
-
       const texte = entree.value.trim();
       if (!texte) return;
 
@@ -618,23 +609,17 @@
         cacherTyping();
         ajouterMessage("assistant", reponse);
       } catch (e) {
-        console.error(e);
         cacherTyping();
-        ajouterMessage(
-          "assistant",
-          "Je n’ai pas réussi à trouver une réponse claire pour cette question. Essaie de reformuler ou pose une autre question."
-        );
-      } finally {
-        enCoursEnvoi = false;
-        const vide = entree.value.trim().length === 0;
-        boutonEnvoyer.disabled = vide;
-        boutonEnvoyer.classList.toggle("desactive", vide);
+        ajouterMessage("assistant", "Une erreur est survenue pendant le traitement de ta demande.");
       }
+
+      enCoursEnvoi = false;
+      const vide = entree.value.trim().length === 0;
+      boutonEnvoyer.disabled = vide;
+      boutonEnvoyer.classList.toggle("desactive", vide);
     }
 
-    boutonEnvoyer.addEventListener("click", () => {
-      envoyerMessage();
-    });
+    boutonEnvoyer.addEventListener("click", envoyerMessage);
 
     entree.addEventListener("keydown", (event) => {
       if (event.key === "Enter" && !event.shiftKey) {
