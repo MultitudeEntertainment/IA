@@ -6,9 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     /* =========================================================
-       RESET & BASE
+       RESET ET BASE
        ========================================================= */
-
     * {
       margin: 0;
       padding: 0;
@@ -26,12 +25,12 @@
       display: flex;
       justify-content: center;
       align-items: stretch;
+      overflow: hidden;
     }
 
     /* =========================================================
-       APP PLEIN ÉCRAN
+       APPLICATION PLEIN ÉCRAN
        ========================================================= */
-
     .app {
       width: 100%;
       height: 100vh;
@@ -46,7 +45,6 @@
     /* =========================================================
        EN-TÊTE
        ========================================================= */
-
     header {
       flex-shrink: 0;
       padding: 14px 18px;
@@ -57,24 +55,24 @@
       background: #f9fafb;
     }
 
-    .titre-bloc {
+    .bloc-titre {
       display: flex;
       flex-direction: column;
       gap: 2px;
     }
 
-    .titre-principal {
+    .titre {
       font-size: 16px;
       font-weight: 600;
       color: #111827;
     }
 
-    .titre-sous {
+    .soustitre {
       font-size: 12px;
       color: #6b7280;
     }
 
-    .etat-bloc {
+    .bloc-etat {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -82,7 +80,7 @@
       color: #4b5563;
     }
 
-    .etat-point {
+    .point-etat {
       width: 8px;
       height: 8px;
       border-radius: 999px;
@@ -92,8 +90,8 @@
     /* =========================================================
        ZONE DE CHAT
        ========================================================= */
-
-    .chat {
+    .zone-chat {
+      position: relative;
       flex: 1;
       padding: 16px 18px;
       overflow-y: auto;
@@ -121,7 +119,6 @@
     /* =========================================================
        MESSAGES
        ========================================================= */
-
     .ligne-message {
       display: flex;
     }
@@ -134,8 +131,14 @@
       justify-content: flex-start;
     }
 
-    .bulle {
+    .bloc-bulle {
       max-width: 80%;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .bulle {
       padding: 10px 13px;
       border-radius: 16px;
       font-size: 14px;
@@ -159,7 +162,6 @@
     }
 
     .meta {
-      margin-top: 3px;
       font-size: 11px;
       color: #9ca3af;
     }
@@ -167,7 +169,6 @@
     /* =========================================================
        INDICATEUR DE SAISIE
        ========================================================= */
-
     .ligne-saisie {
       display: flex;
       justify-content: flex-start;
@@ -202,7 +203,6 @@
     /* =========================================================
        BARRE D'ENTRÉE
        ========================================================= */
-
     .barre-entree {
       flex-shrink: 0;
       padding: 10px 12px;
@@ -213,11 +213,11 @@
       gap: 10px;
     }
 
-    .entree-conteneur {
+    .conteneur-entree {
       flex: 1;
-      position: relative;
       display: flex;
       flex-direction: column;
+      gap: 4px;
     }
 
     .entree {
@@ -241,17 +241,16 @@
 
     .entree:focus {
       border-color: #3b82f6;
-      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4);
+      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.35);
     }
 
     .astuce {
-      margin-top: 3px;
       font-size: 11px;
       color: #9ca3af;
-      align-self: flex-end;
+      text-align: right;
     }
 
-    .envoyer {
+    .bouton-envoyer {
       width: 46px;
       height: 42px;
       border-radius: 12px;
@@ -267,18 +266,18 @@
       box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
     }
 
-    .envoyer:hover {
+    .bouton-envoyer:hover {
       background: #1d4ed8;
       box-shadow: 0 6px 14px rgba(37, 99, 235, 0.4);
       transform: translateY(-1px);
     }
 
-    .envoyer:active {
+    .bouton-envoyer:active {
       transform: translateY(1px) scale(0.97);
       box-shadow: 0 3px 8px rgba(37, 99, 235, 0.3);
     }
 
-    .envoyer.desactive {
+    .bouton-envoyer.desactive {
       opacity: 0.5;
       cursor: default;
       box-shadow: none;
@@ -286,9 +285,8 @@
     }
 
     /* =========================================================
-       BANNIÈRE DE CHARGEMENT
+       BANNIÈRE DU MODÈLE
        ========================================================= */
-
     .banniere-modele {
       position: absolute;
       top: 10px;
@@ -319,7 +317,6 @@
     /* =========================================================
        ANIMATIONS
        ========================================================= */
-
     @keyframes apparition {
       from { opacity: 0; transform: translateY(4px); }
       to   { opacity: 1; transform: translateY(0); }
@@ -337,7 +334,6 @@
     /* =========================================================
        RESPONSIVE
        ========================================================= */
-
     @media (max-width: 768px) {
       .app {
         max-width: 100%;
@@ -349,7 +345,7 @@
         padding: 12px 14px;
       }
 
-      .chat {
+      .zone-chat {
         padding: 10px 12px;
       }
 
@@ -369,7 +365,7 @@
         font-size: 10px;
       }
 
-      .envoyer {
+      .bouton-envoyer {
         width: 42px;
         height: 38px;
         font-size: 16px;
@@ -380,53 +376,53 @@
 <body>
   <div class="app">
     <header>
-      <div class="titre-bloc">
-        <div class="titre-principal">Assistant IA</div>
-        <div class="titre-sous">Conversation en français</div>
+      <div class="bloc-titre">
+        <div class="titre">Assistant IA</div>
+        <div class="soustitre">Conversation en français</div>
       </div>
-      <div class="etat-bloc">
-        <div class="etat-point"></div>
+      <div class="bloc-etat">
+        <div class="point-etat"></div>
         <div>Actif</div>
       </div>
     </header>
 
-    <main class="chat" id="zone-chat">
+    <main class="zone-chat" id="zone-chat">
       <div class="placeholder" id="placeholder">
         <strong>Bienvenue.</strong>
-        Commence par écrire un message en bas.<br />
-        L’assistant répondra directement dans cette conversation.
+        Écris un message en bas pour commencer la conversation.<br />
+        L’assistant répondra de manière simple et naturelle.
       </div>
     </main>
 
     <footer class="barre-entree">
-      <div class="entree-conteneur">
+      <div class="conteneur-entree">
         <textarea
-          id="entree-texte"
+          id="entree"
           class="entree"
           placeholder="Écris ici… (Entrée pour envoyer, Shift+Entrée pour un retour à la ligne)"
         ></textarea>
         <div class="astuce">Entrée pour envoyer · Shift+Entrée pour retour à la ligne</div>
       </div>
-      <button id="bouton-envoyer" class="envoyer desactive" disabled>➤</button>
+      <button id="bouton-envoyer" class="bouton-envoyer desactive" disabled>➤</button>
     </footer>
   </div>
 
   <script type="module">
     // =========================================================
-    // IMPORT LIBRAIRIE IA (modèle caché)
+    // IMPORT DE LA LIBRAIRIE IA (modèle caché, pas affiché)
     // =========================================================
     import { pipeline } from "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.6.1";
 
     // =========================================================
     // RÉFÉRENCES DOM
     // =========================================================
-    const zoneChat      = document.getElementById("zone-chat");
-    const placeholder   = document.getElementById("placeholder");
-    const entreeTexte   = document.getElementById("entree-texte");
+    const zoneChat = document.getElementById("zone-chat");
+    const placeholder = document.getElementById("placeholder");
+    const entree = document.getElementById("entree");
     const boutonEnvoyer = document.getElementById("bouton-envoyer");
 
     // =========================================================
-    // ÉTAT
+    // ÉTAT GLOBAL
     // =========================================================
     let generateur = null;
     let modelePret = false;
@@ -449,8 +445,11 @@
     // =========================================================
     async function chargerModele() {
       try {
-        // Modèle interne, jamais affiché dans l’interface.
-        generateur = await pipeline("text-generation", "Xenova/llama2.c-stories110M");
+        // Modèle interne, utilisable dans le navigateur, nom jamais affiché.
+        generateur = await pipeline(
+          "text-generation",
+          "Xenova/gpt2"
+        );
 
         modelePret = true;
         banniere.innerHTML = `
@@ -461,7 +460,7 @@
           if (banniere && banniere.parentNode) {
             banniere.remove();
           }
-        }, 1600);
+        }, 1500);
 
         boutonEnvoyer.disabled = false;
         boutonEnvoyer.classList.remove("desactive");
@@ -477,7 +476,7 @@
     chargerModele();
 
     // =========================================================
-    // UTILITAIRES D’AFFICHAGE
+    // FONCTIONS D'AFFICHAGE
     // =========================================================
     function retirerPlaceholder() {
       if (placeholder && placeholder.parentNode) {
@@ -491,27 +490,20 @@
       const ligne = document.createElement("div");
       ligne.className = "ligne-message " + role;
 
-      const conteneur = document.createElement("div");
-      conteneur.style.display = "flex";
-      conteneur.style.flexDirection = "column";
+      const bloc = document.createElement("div");
+      bloc.className = "bloc-bulle";
 
       const bulle = document.createElement("div");
       bulle.className = "bulle";
       bulle.textContent = texte;
 
-      if (role === "utilisateur") {
-        ligne.classList.add("utilisateur");
-      } else {
-        ligne.classList.add("assistant");
-      }
-
       const meta = document.createElement("div");
       meta.className = "meta";
       meta.textContent = role === "utilisateur" ? "Vous" : "Assistant";
 
-      conteneur.appendChild(bulle);
-      conteneur.appendChild(meta);
-      ligne.appendChild(conteneur);
+      bloc.appendChild(bulle);
+      bloc.appendChild(meta);
+      ligne.appendChild(bloc);
       zoneChat.appendChild(ligne);
 
       zoneChat.scrollTop = zoneChat.scrollHeight;
@@ -540,45 +532,86 @@
     }
 
     // =========================================================
-    // GÉNÉRATION DE RÉPONSE
+    // NETTOYAGE DU TEXTE GÉNÉRÉ
+    // (éviter les phrases trop bizarres / couper proprement)
     // =========================================================
-    async function genererReponse(prompt) {
-      if (!generateur) {
-        return "L’assistant n’est pas encore prêt. Réessaie dans quelques instants.";
+    function nettoyerReponse(texteBrut) {
+      if (!texteBrut) return "Je n’ai pas pu générer de réponse.";
+
+      // On enlève les guillemets parasites en début/fin
+      let t = texteBrut.trim();
+      t = t.replace(/^["']+/, "").replace(/["']+$/, "").trim();
+
+      // On essaie de garder une ou deux phrases maximum
+      // en cherchant les points/points d’interrogation/exclamation.
+      const fins = [".", "?", "!"];
+      let indexFin = -1;
+      for (let i = 0; i < t.length; i++) {
+        if (fins.includes(t[i])) {
+          indexFin = i;
+          // on s’arrête à la première phrase complète raisonnable
+          if (i > 20) break;
+        }
       }
 
-      const resultat = await generateur(prompt, {
-        max_new_tokens: 80,
-        temperature: 0.85,
-        top_p: 0.9,
-        repetition_penalty: 1.05
-      });
-
-      const texteComplet = resultat[0]?.generated_text || "";
-      if (!texteComplet) {
-        return "Aucune réponse n’a été générée.";
+      if (indexFin !== -1) {
+        t = t.slice(0, indexFin + 1);
       }
 
-      if (texteComplet.startsWith(prompt)) {
-        const sansPrompt = texteComplet.slice(prompt.length).trim();
-        return sansPrompt || "La réponse générée est vide.";
+      // On enlève les morceaux trop courts ou incomplets
+      if (t.length < 5) {
+        return "Je n’ai pas de réponse utile à donner pour l’instant.";
       }
 
-      return texteComplet.trim();
+      return t;
     }
 
     // =========================================================
-    // GESTION DE L’ENVOI
+    // GÉNÉRATION DE LA RÉPONSE
+    // =========================================================
+    async function genererReponse(texteUtilisateur) {
+      if (!generateur) {
+        return "L’assistant n’est pas encore prêt. Attends quelques instants puis réessaie.";
+      }
+
+      // On force le contexte en français pour limiter l’anglais
+      const prompt =
+        "Tu es un assistant qui répond en français simple et clair. " +
+        "Réponds en quelques phrases maximum, sans écrire d’histoires étranges.\n\n" +
+        "Utilisateur : " + texteUtilisateur + "\n" +
+        "Assistant :";
+
+      const resultats = await generateur(prompt, {
+        max_new_tokens: 80,
+        temperature: 0.7,
+        top_p: 0.9,
+        repetition_penalty: 1.1
+      });
+
+      const texteComplet = resultats[0]?.generated_text || "";
+      let reponseBrute;
+
+      if (texteComplet.startsWith(prompt)) {
+        reponseBrute = texteComplet.slice(prompt.length).trim();
+      } else {
+        reponseBrute = texteComplet.trim();
+      }
+
+      return nettoyerReponse(reponseBrute);
+    }
+
+    // =========================================================
+    // ENVOI DU MESSAGE
     // =========================================================
     async function envoyerMessage() {
       if (!modelePret || enCoursEnvoi) return;
 
-      const texte = entreeTexte.value.trim();
+      const texte = entree.value.trim();
       if (!texte) return;
 
       ajouterMessage("utilisateur", texte);
-      entreeTexte.value = "";
-      entreeTexte.style.height = "auto";
+      entree.value = "";
+      entree.style.height = "auto";
 
       enCoursEnvoi = true;
       boutonEnvoyer.disabled = true;
@@ -587,13 +620,11 @@
       afficherSaisie();
 
       try {
-        const prompt = "Utilisateur : " + texte + "\nAssistant :";
-        const reponse = await genererReponse(prompt);
-
+        const reponse = await genererReponse(texte);
         cacherSaisie();
         ajouterMessage("assistant", reponse);
       } catch (e) {
-        console.error(e);
+        console.error("Erreur génération :", e);
         cacherSaisie();
         ajouterMessage("assistant", "Une erreur est survenue lors de la génération de la réponse.");
       } finally {
@@ -606,22 +637,22 @@
     }
 
     // =========================================================
-    // ÉVÉNEMENTS
+    // GESTION DES ÉVÉNEMENTS
     // =========================================================
     boutonEnvoyer.addEventListener("click", () => {
       envoyerMessage();
     });
 
-    entreeTexte.addEventListener("keydown", (event) => {
+    entree.addEventListener("keydown", (event) => {
       if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();
         envoyerMessage();
       }
     });
 
-    entreeTexte.addEventListener("input", () => {
-      entreeTexte.style.height = "auto";
-      entreeTexte.style.height = Math.min(entreeTexte.scrollHeight, 140) + "px";
+    entree.addEventListener("input", () => {
+      entree.style.height = "auto";
+      entree.style.height = Math.min(entree.scrollHeight, 140) + "px";
     });
   </script>
 </body>
