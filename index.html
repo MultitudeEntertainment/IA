@@ -2,14 +2,19 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Chat IA local - Nicolas</title>
+  <title>Assistant</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    /* --------- Reset --------- */
+    /*
+    ============================================================
+    STYLES GLOBAUX
+    ============================================================
+    */
+
     * {
-      box-sizing: border-box;
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
     }
 
     html, body {
@@ -18,141 +23,362 @@
 
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top, #1f2937 0, #020617 45%, #000 100%);
+      background:
+        radial-gradient(circle at top, #1f2937 0, #020617 40%, #000 100%);
       color: #e5e7eb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 12px;
+      overflow: hidden;
+    }
+
+    /*
+    ============================================================
+    CONTENEUR PRINCIPAL
+    ============================================================
+    */
+
+    .app-shell {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      max-width: 980px;
+      max-height: 780px;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 12px;
     }
 
-    /* --------- App container --------- */
+    .background-glow {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.85;
+    }
+
+    .bg-orb {
+      position: absolute;
+      border-radius: 999px;
+      filter: blur(40px);
+      opacity: 0.26;
+      mix-blend-mode: screen;
+    }
+
+    .bg-orb.blue {
+      width: 320px;
+      height: 320px;
+      top: -40px;
+      left: 20%;
+      background: #2563eb;
+    }
+
+    .bg-orb.purple {
+      width: 260px;
+      height: 260px;
+      bottom: -40px;
+      right: 5%;
+      background: #7c3aed;
+    }
+
+    .bg-orb.pink {
+      width: 220px;
+      height: 220px;
+      bottom: 20%;
+      left: 5%;
+      background: #ec4899;
+    }
+
     .app {
+      position: relative;
+      z-index: 1;
       width: 100%;
-      max-width: 940px;
+      max-width: 960px;
       height: 95vh;
       max-height: 760px;
-      background: rgba(15, 23, 42, 0.96);
-      border-radius: 20px;
+      background: radial-gradient(
+        circle at top left,
+        rgba(37, 99, 235, 0.16),
+        rgba(15, 23, 42, 0.98)
+      );
+      border-radius: 24px;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      box-shadow:
-        0 0 40px rgba(0, 0, 0, 0.8),
-        0 0 0 1px rgba(148, 163, 184, 0.35);
       border: 1px solid rgba(148, 163, 184, 0.35);
-      backdrop-filter: blur(14px);
+      box-shadow:
+        0 0 80px rgba(0, 0, 0, 0.85),
+        0 0 0 1px rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(18px);
     }
 
-    /* --------- Header --------- */
-    .app-header {
-      padding: 14px 18px;
+    /*
+    ============================================================
+    BARRE SUPERIEURE
+    ============================================================
+    */
+
+    .app-topbar {
+      position: relative;
+      padding: 10px 16px 8px 16px;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.95);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background:
+        linear-gradient(
+          90deg,
+          rgba(30, 64, 175, 0.65),
+          rgba(124, 58, 237, 0.5),
+          rgba(219, 39, 119, 0.45)
+        );
+      box-shadow: 0 1px 0 rgba(15, 23, 42, 0.9);
+    }
+
+    .topbar-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: linear-gradient(
-        90deg,
-        rgba(59, 130, 246, 0.35),
-        rgba(168, 85, 247, 0.28),
-        rgba(236, 72, 153, 0.25)
-      );
-      border-bottom: 1px solid rgba(15, 23, 42, 0.9);
-    }
-
-    .app-header-left {
-      display: flex;
-      align-items: center;
       gap: 12px;
     }
 
-    .status-dot {
-      width: 11px;
-      height: 11px;
-      border-radius: 999px;
-      background: #22c55e;
-      box-shadow: 0 0 10px rgba(34, 197, 94, 0.9);
+    .window-dots {
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .app-title {
-      font-size: 16px;
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      opacity: 0.8;
+    }
+
+    .dot.red {
+      background: #ef4444;
+    }
+
+    .dot.yellow {
+      background: #facc15;
+    }
+
+    .dot.green {
+      background: #22c55e;
+    }
+
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .title-main {
+      font-size: 15px;
       font-weight: 600;
       letter-spacing: 0.02em;
     }
 
-    .app-subtitle {
-      font-size: 12px;
-      opacity: 0.85;
+    .title-sub {
+      font-size: 11px;
+      opacity: 0.9;
     }
 
-    .app-header-right {
-      text-align: right;
+    .status-block {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       font-size: 11px;
     }
 
-    .chip {
+    .status-indicator {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 4px 8px;
+      padding: 4px 9px;
       border-radius: 999px;
-      border: 1px solid rgba(15, 23, 42, 0.9);
-      background: rgba(15, 23, 42, 0.65);
-      margin-bottom: 2px;
-      font-size: 11px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.8);
+      box-shadow: 0 0 12px rgba(15, 23, 42, 0.9);
     }
 
-    .chip-dot {
+    .status-dot-live {
       width: 7px;
       height: 7px;
       border-radius: 999px;
-      background: #38bdf8;
-      box-shadow: 0 0 8px rgba(56, 189, 248, 0.9);
+      background: #22c55e;
+      box-shadow: 0 0 12px rgba(34, 197, 94, 0.95);
     }
 
-    /* --------- Chat container --------- */
-    .chat {
+    .status-text {
+      opacity: 0.9;
+    }
+
+    .info-text {
+      font-size: 11px;
+      opacity: 0.9;
+    }
+
+    /*
+    ============================================================
+    CORPS : SIDEBAR + CHAT
+    ============================================================
+    */
+
+    .main-layout {
       flex: 1;
-      padding: 14px 18px;
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      overflow: hidden;
+    }
+
+    /*
+    ------------------------------------------------------------
+    PANNEAU LATERAL
+    ------------------------------------------------------------
+    */
+
+    .sidebar {
+      border-right: 1px solid rgba(15, 23, 42, 1);
+      background: radial-gradient(
+        circle at top left,
+        rgba(15, 23, 42, 0.2),
+        rgba(15, 23, 42, 1)
+      );
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      gap: 10px;
+    }
+
+    .sidebar-section {
+      padding: 8px 8px;
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(30, 64, 175, 0.6);
+      box-shadow: 0 0 14px rgba(15, 23, 42, 1);
+    }
+
+    .sidebar-section-title {
+      font-size: 12px;
+      font-weight: 600;
+      opacity: 0.9;
+      margin-bottom: 6px;
+    }
+
+    .sidebar-tips {
+      font-size: 11px;
+      opacity: 0.9;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .tip-pill {
+      padding: 6px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.96);
+      cursor: pointer;
+      transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        transform 0.1s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tip-pill:hover {
+      background: rgba(30, 64, 175, 0.45);
+      border-color: rgba(96, 165, 250, 0.8);
+      transform: translateY(-1px);
+    }
+
+    .tip-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #60a5fa;
+      box-shadow: 0 0 8px rgba(59, 130, 246, 0.9);
+    }
+
+    .tip-text {
+      font-size: 11px;
+    }
+
+    .sidebar-small-text {
+      font-size: 10px;
+      opacity: 0.9;
+      line-height: 1.4;
+    }
+
+    /*
+    ------------------------------------------------------------
+    ZONE DE CHAT
+    ------------------------------------------------------------
+    */
+
+    .chat-panel {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chat-wrapper {
+      flex: 1;
+      padding: 12px 14px;
+      overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 10px;
-      overflow-y: auto;
-      scroll-behavior: smooth;
       position: relative;
     }
 
     .chat-placeholder {
       margin: auto;
       text-align: center;
-      opacity: 0.7;
+      opacity: 0.74;
       font-size: 13px;
-      max-width: 480px;
+      max-width: 460px;
       line-height: 1.5;
     }
 
-    .chat-placeholder strong {
+    .chat-placeholder-title {
       font-weight: 600;
-      color: #bfdbfe;
+      margin-bottom: 4px;
     }
+
+    .chat-placeholder-body {
+      font-size: 12px;
+    }
+
+    /*
+    ------------------------------------------------------------
+    BULLES DE MESSAGES
+    ------------------------------------------------------------
+    */
 
     .message-row {
       display: flex;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
     .message-row.user {
       justify-content: flex-end;
     }
 
-    .message-row.ai {
+    .message-row.bot {
       justify-content: flex-start;
     }
 
     .message-wrapper {
-      max-width: 72%;
+      max-width: 74%;
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 2px;
     }
 
     .message-bubble {
@@ -160,7 +386,6 @@
       border-radius: 14px;
       font-size: 14px;
       line-height: 1.45;
-      position: relative;
       word-wrap: break-word;
       white-space: pre-wrap;
       animation: fadeInUp 0.18s ease-out;
@@ -170,32 +395,44 @@
       background: linear-gradient(135deg, #2563eb, #7c3aed);
       color: #f9fafb;
       border-bottom-right-radius: 4px;
-      box-shadow: 0 0 18px rgba(79, 70, 229, 0.8);
+      box-shadow: 0 0 16px rgba(79, 70, 229, 0.85);
     }
 
-    .message-row.ai .message-bubble {
+    .message-row.bot .message-bubble {
       background: rgba(15, 23, 42, 0.98);
-      border: 1px solid rgba(148, 163, 184, 0.65);
+      border: 1px solid rgba(148, 163, 184, 0.7);
       border-bottom-left-radius: 4px;
     }
 
     .message-meta {
       font-size: 11px;
-      opacity: 0.6;
+      opacity: 0.7;
     }
 
     .message-meta span {
-      opacity: 0.85;
+      opacity: 0.9;
     }
 
-    .typing-indicator {
+    /*
+    ------------------------------------------------------------
+    INDICATEUR DE SAISIE
+    ------------------------------------------------------------
+    */
+
+    .typing-row {
+      display: flex;
+      justify-content: flex-start;
+    }
+
+    .typing-bubble {
       display: inline-flex;
+      align-items: center;
       gap: 4px;
-      padding: 6px 8px;
+      padding: 6px 9px;
       border-radius: 999px;
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      margin-top: 4px;
+      background: rgba(15, 23, 42, 0.98);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      box-shadow: 0 0 12px rgba(15, 23, 42, 1);
     }
 
     .typing-dot {
@@ -215,11 +452,17 @@
       animation-delay: 0.4s;
     }
 
-    /* --------- Input bar --------- */
+    /*
+    ------------------------------------------------------------
+    BARRE D'ENTREE
+    ------------------------------------------------------------
+    */
+
     .input-bar {
       border-top: 1px solid rgba(15, 23, 42, 1);
-      background: radial-gradient(circle at top, rgba(30, 64, 175, 0.25), rgba(15, 23, 42, 0.98));
-      padding: 10px 14px;
+      background:
+        radial-gradient(circle at top, rgba(30, 64, 175, 0.4), rgba(15, 23, 42, 0.98));
+      padding: 10px 12px;
       display: flex;
       align-items: flex-end;
       gap: 10px;
@@ -232,17 +475,20 @@
 
     .input {
       width: 100%;
-      min-height: 40px;
+      min-height: 42px;
       max-height: 120px;
-      padding: 8px 10px 24px 10px;
       resize: none;
+      padding: 9px 10px 24px 10px;
       border-radius: 10px;
-      border: 1px solid rgba(148, 163, 184, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.85);
       background: rgba(15, 23, 42, 0.96);
       color: #f9fafb;
       font-size: 14px;
       outline: none;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+      transition:
+        border-color 0.16s ease,
+        box-shadow 0.16s ease,
+        background 0.16s ease;
     }
 
     .input::placeholder {
@@ -251,7 +497,7 @@
 
     .input:focus {
       border-color: #60a5fa;
-      box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.7);
+      box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.85);
       background: rgba(15, 23, 42, 1);
     }
 
@@ -260,12 +506,12 @@
       right: 8px;
       bottom: 4px;
       font-size: 11px;
-      opacity: 0.65;
+      opacity: 0.7;
     }
 
     .send-btn {
-      width: 44px;
-      height: 40px;
+      width: 46px;
+      height: 42px;
       border-radius: 12px;
       border: none;
       cursor: pointer;
@@ -276,7 +522,10 @@
       justify-content: center;
       font-size: 18px;
       box-shadow: 0 0 18px rgba(79, 70, 229, 0.85);
-      transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.1s ease;
+      transition:
+        transform 0.1s ease,
+        box-shadow 0.1s ease,
+        opacity 0.1s ease;
     }
 
     .send-btn:hover {
@@ -286,7 +535,7 @@
 
     .send-btn:active {
       transform: translateY(1px) scale(0.97);
-      box-shadow: 0 0 10px rgba(79, 70, 229, 0.7);
+      box-shadow: 0 0 12px rgba(79, 70, 229, 0.8);
     }
 
     .send-btn.disabled {
@@ -296,34 +545,44 @@
       transform: none;
     }
 
-    /* --------- Loader bandeau --------- */
-    .model-loader {
+    /*
+    ------------------------------------------------------------
+    BANDEAU DE CHARGEMENT DU MODELE
+    ------------------------------------------------------------
+    */
+
+    .model-banner {
       position: absolute;
       top: 10px;
       left: 50%;
       transform: translateX(-50%);
       padding: 6px 10px;
       border-radius: 999px;
-      background: rgba(15, 23, 42, 0.96);
-      border: 1px solid rgba(96, 165, 250, 0.8);
+      background: rgba(15, 23, 42, 0.98);
+      border: 1px solid rgba(96, 165, 250, 0.9);
       font-size: 11px;
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      box-shadow: 0 0 18px rgba(59, 130, 246, 0.8);
+      box-shadow: 0 0 24px rgba(37, 99, 235, 0.9);
       z-index: 10;
     }
 
-    .loader-spinner {
+    .spinner {
       width: 12px;
       height: 12px;
       border-radius: 999px;
-      border: 2px solid rgba(96, 165, 250, 0.2);
+      border: 2px solid rgba(96, 165, 250, 0.25);
       border-top-color: #60a5fa;
       animation: spin 0.8s linear infinite;
     }
 
-    /* --------- Animations --------- */
+    /*
+    ============================================================
+    ANIMATIONS
+    ============================================================
+    */
+
     @keyframes fadeInUp {
       from {
         opacity: 0;
@@ -336,144 +595,251 @@
     }
 
     @keyframes typingBlink {
-      0%, 60%, 100% { opacity: 0.2; transform: translateY(0); }
-      30% { opacity: 1; transform: translateY(-1px); }
+      0%, 60%, 100% {
+        opacity: 0.25;
+        transform: translateY(0);
+      }
+      30% {
+        opacity: 1;
+        transform: translateY(-1px);
+      }
     }
 
     @keyframes spin {
-      to { transform: rotate(360deg); }
+      to {
+        transform: rotate(360deg);
+      }
     }
 
-    /* --------- Responsive --------- */
-    @media (max-width: 640px) {
+    /*
+    ============================================================
+    RESPONSIVE
+    ============================================================
+    */
+
+    @media (max-width: 780px) {
       body {
         padding: 0;
       }
 
       .app {
-        height: 100vh;
-        max-height: none;
         border-radius: 0;
+        max-height: none;
+        height: 100vh;
+      }
+
+      .main-layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .sidebar {
+        display: none;
       }
 
       .message-wrapper {
-        max-width: 86%;
+        max-width: 88%;
       }
     }
   </style>
 </head>
 <body>
-  <div class="app">
-    <!-- Header -->
-    <header class="app-header">
-      <div class="app-header-left">
-        <div class="status-dot"></div>
-        <div>
-          <div class="app-title">Assistant IA local de Nicolas</div>
-          <div class="app-subtitle">Modèle open source dans ton navigateur, sans clé.</div>
-        </div>
-      </div>
-      <div class="app-header-right">
-        <div class="chip">
-          <div class="chip-dot"></div>
-          <span>Mode IA locale navigateur</span>
-        </div>
-        <div>Modèle : <strong>GPT‑2 (Xenova)</strong></div>
-        <div style="opacity:0.85;">Aucun serveur, aucune clé API</div>
-      </div>
-    </header>
+  <div class="app-shell">
+    <div class="background-glow">
+      <div class="bg-orb blue"></div>
+      <div class="bg-orb purple"></div>
+      <div class="bg-orb pink"></div>
+    </div>
 
-    <!-- Chat -->
-    <main class="chat" id="chat">
-      <div class="chat-placeholder" id="placeholder">
-        <strong>Bienvenue dans ton chat IA 100% local.</strong><br /><br />
-        Le modèle open source sera chargé directement dans ton navigateur.<br />
-        C’est l’équivalent de ton IA en Torch, mais en JavaScript, sans clé et sans backend.<br /><br />
-        Quand le chargement du modèle est terminé, commence à m’écrire un message en bas.
-      </div>
-    </main>
+    <div class="app">
+      <!-- Barre supérieure -->
+      <header class="app-topbar">
+        <div class="topbar-row">
+          <div class="window-dots">
+            <div class="dot red"></div>
+            <div class="dot yellow"></div>
+            <div class="dot green"></div>
+          </div>
+          <div class="title-block">
+            <div class="title-main">Assistant</div>
+            <div class="title-sub">Interface de conversation</div>
+          </div>
+          <div class="status-block">
+            <div class="status-indicator">
+              <div class="status-dot-live"></div>
+              <div class="status-text">Actif</div>
+            </div>
+            <div class="info-text">
+              Entrée pour envoyer · Shift+Entrée pour un retour à la ligne
+            </div>
+          </div>
+        </div>
+      </header>
 
-    <!-- Input -->
-    <footer class="input-bar">
-      <div class="input-wrapper">
-        <textarea
-          id="user-input"
-          class="input"
-          rows="1"
-          placeholder="Pose ta question ici... (Entrée pour envoyer, Shift+Entrée pour un retour à la ligne)"
-        ></textarea>
-        <div class="input-hint">Entrée ↵ pour envoyer</div>
+      <!-- Layout principal -->
+      <div class="main-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Suggestions</div>
+            <div class="sidebar-tips">
+              <div class="tip-pill" data-tip="Explique-moi quelque chose de façon simple.">
+                <div class="tip-dot"></div>
+                <div class="tip-text">Explication simple</div>
+              </div>
+              <div class="tip-pill" data-tip="Donne-moi une idée de projet à coder.">
+                <div class="tip-dot"></div>
+                <div class="tip-text">Idée de projet</div>
+              </div>
+              <div class="tip-pill" data-tip="Aide-moi à mieux formuler ce que je veux dire.">
+                <div class="tip-dot"></div>
+                <div class="tip-text">Reformulation</div>
+              </div>
+              <div class="tip-pill" data-tip="Propose-moi un petit texte créatif.">
+                <div class="tip-dot"></div>
+                <div class="tip-text">Texte créatif</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Notes</div>
+            <div class="sidebar-small-text">
+              Cette interface affiche uniquement les échanges.<br />
+              Aucun détail interne sur le modèle utilisé n’apparaît ici.<br />
+              Tout ce que tu écris reste dans cette session de navigation.
+            </div>
+          </div>
+        </aside>
+
+        <!-- Panel de chat -->
+        <section class="chat-panel">
+          <div class="chat-wrapper" id="chat">
+            <div class="chat-placeholder" id="placeholder">
+              <div class="chat-placeholder-title">Bienvenue.</div>
+              <div class="chat-placeholder-body">
+                Tu peux écrire ta question en bas pour commencer la conversation.<br />
+                La réponse sera générée automatiquement par l’assistant.
+              </div>
+            </div>
+          </div>
+
+          <!-- Barre d'entrée -->
+          <footer class="input-bar">
+            <div class="input-wrapper">
+              <textarea
+                id="user-input"
+                class="input"
+                rows="1"
+                placeholder="Écris ici..."
+              ></textarea>
+              <div class="input-hint">
+                Entrée pour envoyer · Shift+Entrée pour un retour à la ligne
+              </div>
+            </div>
+            <button id="send-btn" class="send-btn disabled" disabled>➤</button>
+          </footer>
+        </section>
       </div>
-      <button id="send-btn" class="send-btn disabled" title="Envoyer" disabled>
-        ➤
-      </button>
-    </footer>
+    </div>
   </div>
 
-  <!-- Script IA + logique du chat -->
   <script type="module">
-    // ---------------------------------------------------------
-    //  IMPORT DU PIPELINE TRANSFORMERS.JS (EQUIVALENT DE TORCH)
-    // ---------------------------------------------------------
-    import { pipeline } from "https://cdn.jsdelivr.net/npm/@xenova/transformers";
+    /*
+    ============================================================
+    IMPORT DU PIPELINE (LIBRAIRIE D’IA EN NAVIGATEUR)
+    ============================================================
+    */
+    import { pipeline } from "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.6.1/dist/transformers.min.js";
+    // Transformers.js permet d’exécuter des modèles dans le navigateur sans serveur
+
+    /*
+    ============================================================
+    SELECTION DES ELEMENTS
+    ============================================================
+    */
 
     const chatEl = document.getElementById("chat");
     const placeholderEl = document.getElementById("placeholder");
     const inputEl = document.getElementById("user-input");
     const sendBtn = document.getElementById("send-btn");
+    const tipPills = document.querySelectorAll(".tip-pill");
+
+    /*
+    ============================================================
+    ETAT DE L'APPLICATION
+    ============================================================
+    */
 
     let generator = null;
-    let isSending = false;
     let modelReady = false;
+    let isSending = false;
     let typingEl = null;
 
-    // Bandeau de chargement du modèle
-    const modelLoader = document.createElement("div");
-    modelLoader.className = "model-loader";
-    modelLoader.innerHTML = `
-      <div class="loader-spinner"></div>
-      <div>Chargement du modèle IA local (GPT‑2)...</div>
-    `;
-    chatEl.appendChild(modelLoader);
+    /*
+    ============================================================
+    BANDEAU DE CHARGEMENT DU MODELE
+    ============================================================
+    */
 
-    // ---------------------------------------------------------
-    //  CHARGEMENT DU MODELE (EQUIVALENT A TORCH.LOAD EN PYTHON)
-    // ---------------------------------------------------------
+    const modelBanner = document.createElement("div");
+    modelBanner.className = "model-banner";
+    modelBanner.innerHTML = `
+      <div class="spinner"></div>
+      <div>Préparation de l'assistant...</div>
+    `;
+    chatEl.appendChild(modelBanner);
+
+    /*
+    ============================================================
+    CHARGEMENT DU MODELE EN TACHE DE FOND
+    ============================================================
+    */
+
     async function loadModel() {
       try {
+        // Le modèle exact est uniquement dans le code,
+        // jamais affiché à l’écran.
         generator = await pipeline(
           "text-generation",
-          "Xenova/gpt2"
+          "Xenova/llama2.c-stories110M"
         );
+
         modelReady = true;
-        modelLoader.innerHTML = `
-          <div class="loader-spinner" style="border-top-color:#22c55e;"></div>
-          <div>Modèle chargé. Tu peux commencer à écrire.</div>
+        modelBanner.innerHTML = `
+          <div class="spinner" style="border-top-color:#22c55e;"></div>
+          <div>Assistant prêt.</div>
         `;
         setTimeout(() => {
-          modelLoader.remove();
-        }, 1800);
+          modelBanner.remove();
+        }, 1600);
 
         sendBtn.classList.remove("disabled");
         sendBtn.disabled = false;
-      } catch (err) {
-        console.error("Erreur de chargement du modèle :", err);
-        modelLoader.innerHTML = `
-          <div style="width:12px;height:12px;border-radius:999px;background:#ef4444;"></div>
-          <div>Erreur lors du chargement du modèle.</div>
+      } catch (error) {
+        console.error("Erreur lors du chargement du modèle :", error);
+        modelBanner.innerHTML = `
+          <div style="width:10px;height:10px;border-radius:999px;background:#ef4444;"></div>
+          <div>Erreur lors de la préparation de l'assistant.</div>
         `;
       }
     }
 
     loadModel();
 
-    // ---------------------------------------------------------
-    //  AFFICHAGE DES MESSAGES
-    // ---------------------------------------------------------
-    function addMessage(role, text) {
-      if (placeholderEl) {
+    /*
+    ============================================================
+    AFFICHAGE DE MESSAGES
+    ============================================================
+    */
+
+    function removePlaceholderIfNeeded() {
+      if (placeholderEl && placeholderEl.parentNode) {
         placeholderEl.remove();
       }
+    }
+
+    function addMessage(role, text) {
+      removePlaceholderIfNeeded();
 
       const row = document.createElement("div");
       row.className = "message-row " + role;
@@ -487,9 +853,10 @@
 
       const meta = document.createElement("div");
       meta.className = "message-meta";
-      meta.innerHTML = role === "user"
-        ? `<span>Toi</span>`
-        : `<span>Assistant IA local</span>`;
+      meta.innerHTML =
+        role === "user"
+          ? `<span>Utilisateur</span>`
+          : `<span>Assistant</span>`;
 
       wrapper.appendChild(bubble);
       wrapper.appendChild(meta);
@@ -499,18 +866,22 @@
       chatEl.scrollTop = chatEl.scrollHeight;
     }
 
+    /*
+    ============================================================
+    INDICATEUR DE SAISIE
+    ============================================================
+    */
+
     function showTyping() {
       if (typingEl) return;
 
       typingEl = document.createElement("div");
-      typingEl.className = "message-row ai";
+      typingEl.className = "typing-row";
       typingEl.innerHTML = `
-        <div class="message-wrapper">
-          <div class="typing-indicator">
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-          </div>
+        <div class="typing-bubble">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
         </div>
       `;
       chatEl.appendChild(typingEl);
@@ -518,42 +889,49 @@
     }
 
     function hideTyping() {
-      if (typingEl) {
+      if (typingEl && typingEl.parentNode) {
         typingEl.remove();
-        typingEl = null;
       }
+      typingEl = null;
     }
 
-    // ---------------------------------------------------------
-    //  GENERATION DE TEXTE (EQUIVALENT FORWARD DU MODELE TORCH)
-    // ---------------------------------------------------------
+    /*
+    ============================================================
+    GENERATION DE LA REPONSE
+    ============================================================
+    */
+
     async function generateResponse(prompt) {
       if (!generator) {
-        return "Le modèle n'est pas encore prêt. Attends quelques secondes puis réessaie.";
+        return "L'assistant n'est pas encore prêt. Réessaie dans quelques instants.";
       }
 
       const maxTokens = 80;
 
       const output = await generator(prompt, {
         max_new_tokens: maxTokens,
-        temperature: 0.8,
+        temperature: 0.9,
         top_p: 0.9,
-        repetition_penalty: 1.1
+        repetition_penalty: 1.05,
       });
 
-      const fullText = output[0].generated_text;
+      const fullText = output[0].generated_text || "";
+
       if (!fullText.startsWith(prompt)) {
-        return fullText;
+        return fullText.trim() || "Aucune réponse n'a été générée.";
       }
 
       let completion = fullText.slice(prompt.length);
       completion = completion.trim();
-      return completion || "(La génération n'a rien produit d'intéressant...)";
+      return completion || "La réponse générée est vide.";
     }
 
-    // ---------------------------------------------------------
-    //  GESTION DE L'ENVOI
-    // ---------------------------------------------------------
+    /*
+    ============================================================
+    GESTION DE L'ENVOI
+    ============================================================
+    */
+
     async function handleSend() {
       if (isSending || !modelReady) return;
 
@@ -567,18 +945,22 @@
       isSending = true;
       sendBtn.classList.add("disabled");
       sendBtn.disabled = true;
+
       showTyping();
 
       try {
         const prompt = "Utilisateur: " + text + "\nAssistant:";
-        const aiReply = await generateResponse(prompt);
+        const reply = await generateResponse(prompt);
 
         hideTyping();
-        addMessage("ai", aiReply);
-      } catch (err) {
-        console.error(err);
+        addMessage("bot", reply);
+      } catch (error) {
+        console.error(error);
         hideTyping();
-        addMessage("ai", "Une erreur est survenue lors de la génération de la réponse.");
+        addMessage(
+          "bot",
+          "Une erreur est survenue pendant la génération de la réponse."
+        );
       } finally {
         isSending = false;
         if (modelReady) {
@@ -588,12 +970,15 @@
       }
     }
 
-    // ---------------------------------------------------------
-    //  LISTENERS
-    // ---------------------------------------------------------
-    inputEl.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
+    /*
+    ============================================================
+    GESTION DU TEXTE ET DES RACCOURCIS
+    ============================================================
+    */
+
+    inputEl.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
         handleSend();
       }
     });
@@ -606,6 +991,24 @@
       inputEl.style.height = "auto";
       inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + "px";
     });
+
+    /*
+    ============================================================
+    CLIC SUR LES SUGGESTIONS DANS LA SIDEBAR
+    ============================================================
+    */
+
+    tipPills.forEach((pill) => {
+      pill.addEventListener("click", () => {
+        const text = pill.getAttribute("data-tip") || "";
+        inputEl.value = text;
+        inputEl.focus();
+
+        inputEl.style.height = "auto";
+        inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + "px";
+      });
+    });
   </script>
 </body>
 </html>
+
