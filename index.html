@@ -1,469 +1,818 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <title>Assistant IA local (sans clé, sans serveur)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body {
-      height: 100%;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #020617;
-      color: #e5e7eb;
-    }
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: stretch;
-      overflow: hidden;
-    }
-    .app {
-      width: 100%;
-      height: 100vh;
-      max-width: 1000px;
-      background: radial-gradient(circle at top, #0f172a 0, #020617 55%);
-      display: flex;
-      flex-direction: column;
-      border-left: 1px solid #111827;
-      border-right: 1px solid #111827;
-    }
-    header {
-      flex-shrink: 0;
-      padding: 14px 18px;
-      border-bottom: 1px solid #111827;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: linear-gradient(to right, #020617, #0b1120);
-    }
-    .titre-bloc { display: flex; flex-direction: column; gap: 2px; }
-    .titre {
-      font-size: 16px;
-      font-weight: 600;
-      color: #e5e7eb;
-    }
-    .soustitre {
-      font-size: 12px;
-      color: #9ca3af;
-    }
-    .etat {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 11px;
-      color: #9ca3af;
-    }
-    .point {
-      width: 9px; height: 9px; border-radius: 999px;
-      background: #b91c1c;
-      box-shadow: 0 0 8px rgba(185,28,28,0.7);
-      transition: background 0.2s ease, box-shadow 0.2s ease;
-    }
-    .point.ok {
-      background: #22c55e;
-      box-shadow: 0 0 8px rgba(34,197,94,0.7);
-    }
-    .zone-chat {
-      position: relative;
-      flex: 1;
-      padding: 16px 18px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .placeholder {
-      margin: auto;
-      text-align: center;
-      max-width: 460px;
-      font-size: 14px;
-      color: #9ca3af;
-      line-height: 1.6;
-    }
-    .placeholder strong {
-      display: block;
-      margin-bottom: 6px;
-      color: #e5e7eb;
-      font-size: 15px;
-    }
-    .ligne-message { display: flex; }
-    .ligne-message.utilisateur { justify-content: flex-end; }
-    .ligne-message.assistant { justify-content: flex-start; }
-    .bloc-bulle { max-width: 80%; display: flex; flex-direction: column; gap: 3px; }
-    .bulle {
-      padding: 10px 13px;
-      border-radius: 16px;
-      font-size: 14px;
-      line-height: 1.5;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      animation: apparition 0.18s ease-out;
-    }
-    .ligne-message.utilisateur .bulle {
-      background: linear-gradient(135deg, #2563eb, #4f46e5);
-      color: #f9fafb;
-      border-bottom-right-radius: 4px;
-    }
-    .ligne-message.assistant .bulle {
-      background: rgba(15,23,42,0.96);
-      color: #e5e7eb;
-      border: 1px solid #1e293b;
-      border-bottom-left-radius: 4px;
-    }
-    .meta {
-      font-size: 11px;
-      color: #6b7280;
-    }
-    .barre-entree {
-      flex-shrink: 0;
-      padding: 10px 12px;
-      border-top: 1px solid #111827;
-      background: linear-gradient(to right, #020617, #020617);
-      display: flex;
-      align-items: flex-end;
-      gap: 10px;
-    }
-    .conteneur-entree { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-    .entree {
-      width: 100%;
-      min-height: 44px;
-      max-height: 140px;
-      padding: 9px 10px;
-      border-radius: 10px;
-      border: 1px solid #1f2937;
-      background: #020617;
-      color: #e5e7eb;
-      font-size: 14px;
-      resize: none;
-      outline: none;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
-    }
-    .entree::placeholder { color: #6b7280; }
-    .entree:focus {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 1px rgba(37,99,235,0.6);
-      background: #020617;
-    }
-    .astuce {
-      font-size: 11px;
-      color: #6b7280;
-      text-align: right;
-    }
-    .bouton-envoyer {
-      width: 46px;
-      height: 42px;
-      border-radius: 12px;
-      border: none;
-      background: radial-gradient(circle at top left, #4f46e5, #2563eb);
-      color: #f9fafb;
-      font-size: 18px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease, opacity 0.15s ease;
-      box-shadow: 0 6px 16px rgba(37,99,235,0.6);
-    }
-    .bouton-envoyer:hover {
-      background: radial-gradient(circle at top left, #6366f1, #1d4ed8);
-      box-shadow: 0 8px 20px rgba(37,99,235,0.75);
-      transform: translateY(-1px);
-    }
-    .bouton-envoyer:active {
-      transform: translateY(1px) scale(0.97);
-      box-shadow: 0 4px 10px rgba(37,99,235,0.5);
-    }
-    .bouton-envoyer.desactive {
-      opacity: 0.4;
-      cursor: default;
-      box-shadow: none;
-      transform: none;
-    }
-    .typing {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: rgba(30,64,175,0.25);
-      font-size: 11px;
-      color: #9ca3af;
-    }
-    .typing-dot {
-      width: 5px; height: 5px; border-radius: 999px;
-      background: #9ca3af;
-      opacity: 0.3;
-      animation: clignote 1.3s infinite ease-in-out;
-    }
-    .typing-dot:nth-child(2){ animation-delay: 0.2s; }
-    .typing-dot:nth-child(3){ animation-delay: 0.4s; }
-    @keyframes apparition {
-      from { opacity: 0; transform: translateY(4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes clignote {
-      0%,60%,100% { opacity: 0.25; transform: translateY(0); }
-      30% { opacity: 1; transform: translateY(-1px); }
-    }
-    @media (max-width: 768px) {
-      .app { max-width: 100%; border-left: none; border-right: none; }
-      header { padding: 12px 14px; }
-      .zone-chat { padding: 10px 12px; }
-      .bulle { max-width: 90%; }
-      .barre-entree { padding: 8px 10px; }
-      .entree { font-size: 13px; }
-      .astuce { font-size: 10px; }
-      .bouton-envoyer { width: 42px; height: 38px; font-size: 16px; }
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Windows 10 Malware Simulator</title>
+<style>
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    font-family: "Segoe UI", Tahoma, sans-serif;
+  }
+
+  body {
+    background: #000;
+    overflow: hidden;
+  }
+
+  /* --- Faux bureau Windows 10 --- */
+  #desktop {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle at top left, #1e90ff 0, #004a8f 40%, #002b55 100%);
+    color: #fff;
+  }
+
+  .desktop-icon {
+    position: absolute;
+    width: 80px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 12px;
+  }
+
+  .desktop-icon .icon-box {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 4px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #ffffffaa, #00000055);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 10px;
+  }
+
+  .desktop-icon span {
+    text-shadow: 0 0 3px #000;
+  }
+
+  /* Barre des tâches */
+  #taskbar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 40px;
+    width: 100%;
+    background: #101010ee;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    color: #fff;
+    font-size: 12px;
+  }
+
+  #taskbar .start {
+    width: 30px;
+    height: 30px;
+    border-radius: 3px;
+    background: linear-gradient(135deg, #00a4ef, #0078d7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px;
+    font-weight: bold;
+  }
+
+  #taskbar .task {
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 3px;
+    background: #2b2b2b;
+    display: flex;
+    align-items: center;
+    margin-right: 4px;
+    font-size: 11px;
+  }
+
+  #taskbar .tray {
+    margin-left: auto;
+    opacity: 0.8;
+  }
+
+  /* Fenêtres génériques */
+  .window {
+    position: absolute;
+    background: #f3f3f3;
+    border-radius: 4px;
+    box-shadow: 0 0 12px #000a;
+    overflow: hidden;
+    display: none;
+  }
+
+  .window-header {
+    height: 28px;
+    background: linear-gradient(to right, #0078d7, #005a9e);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    font-size: 12px;
+  }
+
+  .window-header .title {
+    flex: 1;
+  }
+
+  .window-header .buttons {
+    display: flex;
+    gap: 6px;
+  }
+
+  .window-header .btn {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ffffffaa;
+    cursor: default;
+  }
+
+  .window-body {
+    padding: 8px;
+    background: #1e1e1e;
+    color: #dcdcdc;
+    font-family: Consolas, monospace;
+    font-size: 12px;
+    height: calc(100% - 28px);
+    overflow: hidden;
+  }
+
+  /* Terminal PowerShell */
+  #powershell-window {
+    width: 600px;
+    height: 350px;
+    top: 80px;
+    left: 120px;
+  }
+
+  #powershell-window .window-body {
+    background: #012456;
+    color: #e5e5e5;
+  }
+
+  #terminal-output {
+    white-space: pre-wrap;
+    overflow-y: auto;
+    height: 100%;
+  }
+
+  /* Alerte Windows Defender */
+  #defender-window {
+    width: 420px;
+    height: 220px;
+    top: 120px;
+    right: 80px;
+    background: #ffffff;
+    color: #000;
+  }
+
+  #defender-window .window-body {
+    background: #ffffff;
+    color: #000;
+    font-family: "Segoe UI", sans-serif;
+  }
+
+  .defender-title {
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #0078d7;
+  }
+
+  .defender-buttons {
+    margin-top: 16px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .btn-flat {
+    padding: 4px 10px;
+    border-radius: 2px;
+    border: 1px solid #ccc;
+    font-size: 12px;
+    background: #f3f3f3;
+    cursor: default;
+  }
+
+  /* Ransomware plein écran */
+  #ransomware-screen {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at top, #550000, #000000 70%);
+    color: #ff5555;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 40px;
+  }
+
+  #ransomware-box {
+    width: 70%;
+    max-width: 900px;
+    background: #111;
+    border: 3px solid #aa0000;
+    padding: 20px;
+    box-shadow: 0 0 20px #000;
+  }
+
+  #ransomware-title {
+    font-size: 26px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-align: center;
+    color: #ff3333;
+  }
+
+  #ransomware-countdown {
+    text-align: center;
+    margin-bottom: 16px;
+    font-size: 16px;
+  }
+
+  #ransomware-files {
+    background: #000;
+    padding: 10px;
+    height: 180px;
+    overflow-y: auto;
+    border: 1px solid #333;
+    color: #0f0;
+    font-family: Consolas, monospace;
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
+
+  #ransomware-input {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  #ransomware-input input {
+    flex: 1;
+    padding: 4px 6px;
+    background: #000;
+    border: 1px solid #555;
+    color: #0f0;
+    font-family: Consolas, monospace;
+  }
+
+  #ransomware-input button {
+    padding: 4px 10px;
+    background: #550000;
+    border: 1px solid #aa0000;
+    color: #fff;
+    cursor: pointer;
+  }
+
+  /* Faux BSOD */
+  #bsod-screen {
+    position: fixed;
+    inset: 0;
+    background: #0078d7;
+    color: #fff;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding-left: 15%;
+    font-size: 18px;
+  }
+
+  #bsod-smiley {
+    font-size: 80px;
+    margin-bottom: 20px;
+  }
+
+  #bsod-text {
+    max-width: 500px;
+    line-height: 1.4;
+  }
+
+  /* Faux redémarrage */
+  #reboot-screen {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    color: #fff;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+  }
+
+  .win-logo {
+    width: 80px;
+    height: 80px;
+    background: #00a4ef;
+    clip-path: polygon(
+      0 0, 45% 0, 45% 45%, 0 45%,
+      55% 0, 100% 0, 100% 45%, 55% 45%,
+      0 55%, 45% 55%, 45% 100%, 0 100%,
+      55% 55%, 100% 55%, 100% 100%, 55% 100%
+    );
+    margin-bottom: 30px;
+  }
+
+  .spinner {
+    margin-top: 20px;
+    width: 60px;
+    height: 60px;
+    position: relative;
+    animation: spinner-rotate 1.2s linear infinite;
+  }
+
+  .spinner-dot {
+    width: 8px;
+    height: 8px;
+    background: #ffffffcc;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin: -4px 0 0 -4px;
+  }
+
+  .spinner-dot:nth-child(1) { transform: rotate(0deg) translate(0, -22px); }
+  .spinner-dot:nth-child(2) { transform: rotate(45deg) translate(0, -22px); }
+  .spinner-dot:nth-child(3) { transform: rotate(90deg) translate(0, -22px); }
+  .spinner-dot:nth-child(4) { transform: rotate(135deg) translate(0, -22px); }
+  .spinner-dot:nth-child(5) { transform: rotate(180deg) translate(0, -22px); }
+  .spinner-dot:nth-child(6) { transform: rotate(225deg) translate(0, -22px); }
+  .spinner-dot:nth-child(7) { transform: rotate(270deg) translate(0, -22px); }
+  .spinner-dot:nth-child(8) { transform: rotate(315deg) translate(0, -22px); }
+
+  @keyframes spinner-rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Faux écran de connexion */
+  #login-screen {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at top, #1e90ff, #001f3f 60%, #000 100%);
+    color: #fff;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #login-avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    border: 3px solid #ffffffaa;
+    margin-bottom: 10px;
+    background: #ffffff22;
+  }
+
+  #login-user {
+    font-size: 26px;
+    margin-bottom: 10px;
+  }
+
+  #login-password {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  #login-password input {
+    padding: 6px 10px;
+    border-radius: 2px;
+    border: none;
+    min-width: 220px;
+  }
+
+  #login-password button {
+    padding: 4px 10px;
+    border-radius: 2px;
+    border: none;
+    background: #0078d7;
+    color: #fff;
+    cursor: pointer;
+  }
+
+  #login-hint {
+    margin-top: 8px;
+    font-size: 11px;
+    opacity: 0.7;
+  }
+
+  /* Bureau infecté */
+  #infected-desktop {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    color: #ff0000;
+    display: none;
+  }
+
+  #infected-message {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-size: 26px;
+    font-weight: bold;
+  }
+
+  .infected-file {
+    position: absolute;
+    width: 90px;
+    text-align: center;
+    font-size: 11px;
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .infected-file .icon-box {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto 4px;
+    border-radius: 4px;
+    background: #333;
+    border: 1px solid #777;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+  }
+
+  /* Fenêtre "JE TE VOIS" */
+  #je-te-vois {
+    width: 260px;
+    height: 140px;
+    top: 30%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #111;
+    color: #ff0000;
+    display: none;
+  }
+
+  #je-te-vois .window-body {
+    background: #111;
+    color: #ff0000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+
+  /* Fin spéciale clown */
+  #clown-screen {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    color: #fff;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #clown-face {
+    font-size: 80px;
+    animation: clownBounce 1s infinite ease-in-out;
+    margin-bottom: 20px;
+  }
+
+  #clown-text {
+    font-size: 40px;
+    font-weight: bold;
+    color: #ff00ff;
+    text-shadow: 0 0 10px #ff00ff;
+  }
+
+  @keyframes clownBounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-10px) scale(1.1); }
+  }
+
+</style>
 </head>
 <body>
-  <div class="app">
-    <header>
-      <div class="titre-bloc">
-        <div class="titre">Assistant IA local</div>
-        <div class="soustitre">Modèle open‑source dans ton navigateur · sans clé · sans serveur</div>
-      </div>
-      <div class="etat">
-        <div class="point" id="point-etat"></div>
-        <div id="texte-etat">Initialisation du modèle…</div>
-      </div>
-    </header>
 
-    <main class="zone-chat" id="zone-chat">
-      <div class="placeholder" id="placeholder">
-        <strong>Chargement d’une IA locale…</strong>
-        Le modèle est téléchargé et exécuté directement dans ton navigateur.<br />
-        Aucun serveur, aucune clé API, seulement la puissance de ta machine.<br /><br />
-        Le premier chargement peut être long (fichiers volumineux). Laisse la page ouverte.
-      </div>
-    </main>
-
-    <footer class="barre-entree">
-      <div class="conteneur-entree">
-        <textarea
-          id="entree"
-          class="entree"
-          placeholder="Écris ici… (Entrée pour envoyer, Shift+Entrée pour retour à la ligne, attendre la fin du chargement du modèle)"
-        ></textarea>
-        <div class="astuce">Entrée pour envoyer · IA 100% locale (sans clé, sans serveur)</div>
-      </div>
-      <button id="bouton-envoyer" class="bouton-envoyer desactive" disabled>➤</button>
-    </footer>
+<!-- 1. Faux bureau -->
+<div id="desktop">
+  <div class="desktop-icon" style="top: 40px; left: 20px;">
+    <div class="icon-box">PC</div>
+    <span>This PC</span>
+  </div>
+  <div class="desktop-icon" style="top: 120px; left: 20px;">
+    <div class="icon-box">PS</div>
+    <span>PowerShell</span>
+  </div>
+  <div class="desktop-icon" id="icon-encryptor" style="top: 200px; left: 20px;">
+    <div class="icon-box">EXE</div>
+    <span>Encryptor.exe</span>
   </div>
 
-  <!-- On charge WebLLM en module ES -->
-  <script type="module">
-    import * as webllm from "https://unpkg.com/@mlc-ai/web-llm@latest/dist/web-llm.mjs";
+  <div id="taskbar">
+    <div class="start">⊞</div>
+    <div class="task">File Explorer</div>
+    <div class="task">Encryptor.exe</div>
+    <div class="tray">ENG  16:02  🔊  💻</div>
+  </div>
+</div>
 
-    const zoneChat = document.getElementById("zone-chat");
-    const placeholder = document.getElementById("placeholder");
-    const entree = document.getElementById("entree");
-    const boutonEnvoyer = document.getElementById("bouton-envoyer");
-    const pointEtat = document.getElementById("point-etat");
-    const texteEtat = document.getElementById("texte-etat");
+<!-- 3. Fenêtre PowerShell -->
+<div class="window" id="powershell-window">
+  <div class="window-header">
+    <div class="title">Windows PowerShell</div>
+    <div class="buttons">
+      <div class="btn"></div>
+      <div class="btn"></div>
+      <div class="btn" id="ps-close"></div>
+    </div>
+  </div>
+  <div class="window-body">
+    <div id="terminal-output"></div>
+  </div>
+</div>
 
-    let engine = null;
-    let enCoursEnvoi = false;
-    let blocTyping = null;
+<!-- 4. Alerte Windows Defender -->
+<div class="window" id="defender-window">
+  <div class="window-header">
+    <div class="title">Windows Defender Security Center</div>
+    <div class="buttons">
+      <div class="btn"></div>
+      <div class="btn"></div>
+      <div class="btn" id="def-close"></div>
+    </div>
+  </div>
+  <div class="window-body">
+    <div class="defender-title">Menace détectée : Encryptor.exe</div>
+    <p>Windows Defender a détecté une activité suspecte.</p>
+    <p>Type : Faux ransomware (simulation visuelle uniquement).</p>
+    <div class="defender-buttons">
+      <div class="btn-flat">Mettre en quarantaine</div>
+      <div class="btn-flat">Autoriser</div>
+    </div>
+  </div>
+</div>
 
-    function retirerPlaceholder() {
-      if (placeholder && placeholder.parentNode) {
-        placeholder.remove();
+<!-- 5. Faux ransomware -->
+<div id="ransomware-screen">
+  <div id="ransomware-box">
+    <div id="ransomware-title">OOOPS, VOS FICHIERS ONT ÉTÉ CHIFFRÉS !</div>
+    <div id="ransomware-countdown">Temps restant avant destruction : <span id="countdown">00:01:00</span></div>
+    <div id="ransomware-files"></div>
+    <div id="ransomware-input">
+      <span>Enter decryption key:</span>
+      <input type="text" id="decrypt-key" autocomplete="off">
+      <button id="decrypt-btn">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- 6. Faux BSOD -->
+<div id="bsod-screen">
+  <div id="bsod-smiley">:(</div>
+  <div id="bsod-text">
+    Votre PC a rencontré un problème et doit redémarrer.<br><br>
+    Nous collectons simplement des informations sur les erreurs, puis nous redémarrerons pour vous.<br><br>
+    100% terminé<br><br>
+    Pour plus d'informations sur cette erreur et les solutions possibles, visitez :<br>
+    https://www.windows.com/stopcode<br><br>
+    Code d'arrêt : FAUX_MALWARE_SIMULATION
+  </div>
+</div>
+
+<!-- 7. Faux redémarrage -->
+<div id="reboot-screen">
+  <div class="win-logo"></div>
+  <div>Preparing Automatic Repair</div>
+  <div class="spinner">
+    <div class="spinner-dot"></div>
+    <div class="spinner-dot"></div>
+    <div class="spinner-dot"></div>
+    <div class="spinner-dot"></div>
+    <div class="spinner-dot"></div>
+    <div class="spinner-dot"></div>
+    <div class="spinner-dot"></div>
+    <div class="spinner-dot"></div>
+  </div>
+</div>
+
+<!-- 8. Faux écran de connexion -->
+<div id="login-screen">
+  <div id="login-avatar"></div>
+  <div id="login-user">UTILISATEUR</div>
+  <div id="login-password">
+    <input type="password" id="login-input" placeholder="Mot de passe">
+    <button id="login-btn">Connexion</button>
+  </div>
+  <div id="login-hint">Astuce : JAIMELESMALWARES</div>
+</div>
+
+<!-- 9. Bureau infecté -->
+<div id="infected-desktop">
+  <div id="infected-message">NE TE RETOURNE PAS</div>
+</div>
+
+<div class="window" id="je-te-vois">
+  <div class="window-header">
+    <div class="title">Alerte</div>
+    <div class="buttons">
+      <div class="btn"></div>
+      <div class="btn"></div>
+      <div class="btn" id="jtv-close"></div>
+    </div>
+  </div>
+  <div class="window-body">
+    JE TE VOIS
+  </div>
+</div>
+
+<!-- 10. Fin clown -->
+<div id="clown-screen">
+  <div id="clown-face">🤡</div>
+  <div id="clown-text">MARRANT NON ?</div>
+</div>
+
+<script>
+  // Utilitaires
+  function show(el) { el.style.display = "flex"; }
+  function showBlock(el) { el.style.display = "block"; }
+  function hide(el) { el.style.display = "none"; }
+
+  const iconEncryptor = document.getElementById("icon-encryptor");
+  const psWindow = document.getElementById("powershell-window");
+  const psClose = document.getElementById("ps-close");
+  const defWindow = document.getElementById("defender-window");
+  const defClose = document.getElementById("def-close");
+  const terminalOutput = document.getElementById("terminal-output");
+  const ransomwareScreen = document.getElementById("ransomware-screen");
+  const ransomwareFiles = document.getElementById("ransomware-files");
+  const countdownSpan = document.getElementById("countdown");
+  const decryptKeyInput = document.getElementById("decrypt-key");
+  const decryptBtn = document.getElementById("decrypt-btn");
+  const bsodScreen = document.getElementById("bsod-screen");
+  const rebootScreen = document.getElementById("reboot-screen");
+  const loginScreen = document.getElementById("login-screen");
+  const loginInput = document.getElementById("login-input");
+  const loginBtn = document.getElementById("login-btn");
+  const infectedDesktop = document.getElementById("infected-desktop");
+  const jeTeVois = document.getElementById("je-te-vois");
+  const jtvClose = document.getElementById("jtv-close");
+  const clownScreen = document.getElementById("clown-screen");
+
+  let terminalInterval = null;
+  let countdownInterval = null;
+  let countdownSeconds = 60;
+
+  const fakeLines = [
+    "[*] Initializing encryption engine...",
+    "[*] Scanning C:\\Users\\UTILISATEUR\\Documents",
+    "[*] Encrypting file: secret_plan.docx",
+    "[*] Encrypting file: photos_vacances.zip",
+    "[*] Encrypting file: mots_de_passe.txt",
+    "[*] Encrypting file: projet_super_confidentiel.pptx",
+    "[*] Wiping restore points...",
+    "[*] Contacting C2 server at 127.0.0.1...",
+    "[*] Uploading fake telemetry...",
+    "[*] Encryption complete. Ransom note deployed."
+  ];
+
+  const fakeFiles = [];
+  for (let i = 1; i <= 60; i++) {
+    const num = String(i).padStart(2, "0");
+    fakeFiles.push(`C:\\Users\\UTILISATEUR\\Documents\\NOTE_${num}.txt - ENCRYPTED`);
+  }
+
+  function startTerminalSpam() {
+    terminalOutput.textContent = "";
+    let index = 0;
+    terminalInterval = setInterval(() => {
+      if (index < fakeLines.length) {
+        terminalOutput.textContent += fakeLines[index] + "\n";
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        index++;
+      } else {
+        clearInterval(terminalInterval);
       }
-    }
+    }, 300);
+  }
 
-    function ajouterMessage(role, texte) {
-      retirerPlaceholder();
-      const ligne = document.createElement("div");
-      ligne.className = "ligne-message " + (role === "utilisateur" ? "utilisateur" : "assistant");
+  function startDefenderPopup() {
+    setTimeout(() => {
+      showBlock(defWindow);
+    }, 2000);
+  }
 
-      const bloc = document.createElement("div");
-      bloc.className = "bloc-bulle";
+  function startRansomware() {
+    hide(psWindow);
+    hide(defWindow);
+    show(ransomwareScreen);
+    ransomwareFiles.textContent = fakeFiles.join("\n");
+    countdownSeconds = 60;
+    updateCountdown();
+    countdownInterval = setInterval(() => {
+      countdownSeconds--;
+      if (countdownSeconds <= 0) {
+        clearInterval(countdownInterval);
+        goToBSOD();
+      } else {
+        updateCountdown();
+      }
+    }, 1000);
+  }
 
-      const bulle = document.createElement("div");
-      bulle.className = "bulle";
-      bulle.textContent = texte;
+  function updateCountdown() {
+    const m = String(Math.floor(countdownSeconds / 60)).padStart(2, "0");
+    const s = String(countdownSeconds % 60).padStart(2, "0");
+    countdownSpan.textContent = `${m}:${s}`;
+  }
 
-      const meta = document.createElement("div");
-      meta.className = "meta";
-      meta.textContent = role === "utilisateur" ? "Vous" : "Assistant local";
+  function goToBSOD() {
+    hide(ransomwareScreen);
+    show(bsodScreen);
+    setTimeout(() => {
+      hide(bsodScreen);
+      show(rebootScreen);
+      setTimeout(() => {
+        hide(rebootScreen);
+        show(loginScreen);
+      }, 4000);
+    }, 4000);
+  }
 
-      bloc.appendChild(bulle);
-      bloc.appendChild(meta);
-      ligne.appendChild(bloc);
-      zoneChat.appendChild(ligne);
-      zoneChat.scrollTop = zoneChat.scrollHeight;
-    }
+  function goToInfectedDesktop() {
+    hide(loginScreen);
+    show(infectedDesktop);
+    spawnInfectedFiles();
+    setTimeout(() => {
+      autoOpenNote();
+    }, 3000);
+  }
 
-    function afficherTyping() {
-      if (blocTyping) return;
-      blocTyping = document.createElement("div");
-      blocTyping.className = "ligne-message assistant";
-
-      const bloc = document.createElement("div");
-      bloc.className = "bloc-bulle";
-
-      const bulle = document.createElement("div");
-      bulle.className = "typing";
-      bulle.innerHTML = `
-        <span>Réflexion locale...</span>
-        <div class="typing-dot"></div>
-        <div class="typing-dot"></div>
-        <div class="typing-dot"></div>
+  function spawnInfectedFiles() {
+    for (let i = 0; i < 20; i++) {
+      const file = document.createElement("div");
+      file.className = "infected-file";
+      file.style.left = (40 + (i % 10) * 90) + "px";
+      file.style.top = (80 + Math.floor(i / 10) * 100) + "px";
+      file.innerHTML = `
+        <div class="icon-box">TXT</div>
+        <span>NOTE_${String(i + 1).padStart(2, "0")}.txt</span>
       `;
-
-      bloc.appendChild(bulle);
-      blocTyping.appendChild(bloc);
-      zoneChat.appendChild(blocTyping);
-      zoneChat.scrollTop = zoneChat.scrollHeight;
-    }
-
-    function cacherTyping() {
-      if (blocTyping && blocTyping.parentNode) {
-        blocTyping.remove();
-      }
-      blocTyping = null;
-    }
-
-    async function initialiserModele() {
-      try {
-        texteEtat.textContent = "Préparation du modèle IA local…";
-        pointEtat.classList.remove("ok");
-
-        const config = {
-          // Tu peux tester d'autres modèles supportés par WebLLM, mais celui-ci est plus léger
-          model: "Llama-3.2-1B-instruct-q4f32_1-MLC",
-        };
-
-        engine = await webllm.createWebWorkerEngine(
-          new URL("https://unpkg.com/@mlc-ai/web-llm@latest/dist/worker.js", import.meta.url).toString(),
-          config,
-          {
-            initProgressCallback: (report) => {
-              if (report.text) {
-                texteEtat.textContent = report.text;
-              } else if (report.progress) {
-                const p = Math.round(report.progress * 100);
-                texteEtat.textContent = "Chargement du modèle… " + p + "%";
-              }
-            },
-          }
-        );
-
-        texteEtat.textContent = "Modèle local prêt. Tu peux poser une question.";
-        pointEtat.classList.add("ok");
-        boutonEnvoyer.disabled = false;
-        boutonEnvoyer.classList.remove("desactive");
-
-        ajouterMessage(
-          "assistant",
-          "Bonjour, je suis une IA locale exécutée directement dans ton navigateur, sans serveur ni clé API. " +
-          "Je suis moins puissante qu’un grand modèle en ligne, mais je peux tout de même discuter et répondre à tes questions en français."
-        );
-      } catch (e) {
-        console.error(e);
-        texteEtat.textContent = "Échec du chargement du modèle (navigateur non compatible ?)";
-        pointEtat.classList.remove("ok");
-        boutonEnvoyer.disabled = true;
-        boutonEnvoyer.classList.add("desactive");
-        ajouterMessage(
-          "assistant",
-          "Je n’ai pas réussi à charger le modèle IA local. Vérifie que ton navigateur est récent et que WebGPU est disponible (Chrome/Edge recommandé)."
-        );
-      }
-    }
-
-    async function genererReponse(promptUtilisateur) {
-      if (!engine) {
-        return "Le modèle local n’est pas encore prêt.";
-      }
-
-      const conversation = [
-        {
-          role: "system",
-          content:
-            "Tu es un assistant IA exécuté localement dans le navigateur, sans accès à Internet. " +
-            "Tu réponds toujours en français. Si une information dépasse tes capacités ou nécessite le web, " +
-            "tu le précises honnêtement.",
-        },
-        {
-          role: "user",
-          content: promptUtilisateur,
-        },
-      ];
-
-      const generator = await engine.chat.completions.create({
-        messages: conversation,
-        stream: true,
-        max_tokens: 256,
-        temperature: 0.7,
+      file.addEventListener("click", () => {
+        showBlock(jeTeVois);
       });
-
-      let texte = "";
-      for await (const part of generator) {
-        const delta = part.choices?.[0]?.delta?.content ?? "";
-        texte += delta;
-      }
-      return texte || "Je n’ai pas réussi à générer une réponse.";
+      infectedDesktop.appendChild(file);
     }
+  }
 
-    async function envoyerMessage() {
-      if (enCoursEnvoi) return;
-      const texte = entree.value.trim();
-      if (!texte) return;
+  function autoOpenNote() {
+    showBlock(jeTeVois);
+    setTimeout(() => {
+      hide(jeTeVois);
+      hide(infectedDesktop);
+      show(clownScreen);
+    }, 5000);
+  }
 
-      ajouterMessage("utilisateur", texte);
-      entree.value = "";
-      entree.style.height = "auto";
+  // 2. Clic sur Encryptor.exe
+  iconEncryptor.addEventListener("click", () => {
+    showBlock(psWindow);
+    startTerminalSpam();
+    startDefenderPopup();
+    setTimeout(startRansomware, 8000);
+  });
 
-      enCoursEnvoi = true;
-      boutonEnvoyer.disabled = true;
-      boutonEnvoyer.classList.add("desactive");
+  psClose.addEventListener("click", () => hide(psWindow));
+  defClose.addEventListener("click", () => hide(defWindow));
 
-      afficherTyping();
+  decryptBtn.addEventListener("click", () => {
+    goToBSOD();
+  });
 
-      try {
-        const reponse = await genererReponse(texte);
-        cacherTyping();
-        ajouterMessage("assistant", reponse);
-      } catch (e) {
-        console.error(e);
-        cacherTyping();
-        ajouterMessage(
-          "assistant",
-          "Erreur lors de la génération locale. Il se peut que la mémoire soit insuffisante ou que le navigateur limite l’exécution du modèle."
-        );
-      } finally {
-        enCoursEnvoi = false;
-        const vide = entree.value.trim().length === 0;
-        boutonEnvoyer.disabled = vide || !engine;
-        boutonEnvoyer.classList.toggle("desactive", boutonEnvoyer.disabled);
-      }
+  // 8. Login
+  loginBtn.addEventListener("click", () => {
+    if (loginInput.value === "JAIMELESMALWARES") {
+      goToInfectedDesktop();
+    } else {
+      loginInput.value = "";
+      loginInput.placeholder = "Mot de passe incorrect";
     }
+  });
 
-    boutonEnvoyer.addEventListener("click", envoyerMessage);
+  loginInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      loginBtn.click();
+    }
+  });
 
-    entree.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault();
-        envoyerMessage();
-      }
-    });
-
-    entree.addEventListener("input", () => {
-      entree.style.height = "auto";
-      entree.style.height = Math.min(entree.scrollHeight, 140) + "px";
-      const vide = entree.value.trim().length === 0;
-      if (!enCoursEnvoi && engine) {
-        boutonEnvoyer.disabled = vide;
-        boutonEnvoyer.classList.toggle("desactive", vide);
-      }
-    });
-
-    // Lancement du chargement du modèle au démarrage
-    initialiserModele();
-  </script>
+  jtvClose.addEventListener("click", () => hide(jeTeVois));
+</script>
 </body>
 </html>
